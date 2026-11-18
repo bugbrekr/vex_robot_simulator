@@ -35,7 +35,8 @@ class Arm:
 
     @property
     def signal_tower(self):
-        """The Signal Tower wired to the arm (VEXcode CTE config: ``signal_tower = arm.signal_tower``)."""
+        """The Signal Tower wired to the arm. Works as ``arm.signal_tower`` (the codeexp config
+        line) and as ``arm.signal_tower()`` (calling a SignalTower returns itself)."""
         if self._tower is None:
             from vexsim.api.cte.signal_tower import SignalTower
 

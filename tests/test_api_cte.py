@@ -192,3 +192,11 @@ def test_codeexp_template_runs(run):
     assert s["console"].endswith("180\n")
     assert s["signal_tower"]["leds"]["blue"] == "blink"
     assert s["arm"]["tcp"] == [180.0, 0.0, 180.0]
+
+
+def test_arm_signal_tower_attribute_or_call(run):
+    s = run("from cte import *\narm = Arm()\na = arm.signal_tower\nb = arm.signal_tower()\n"
+            "print(a is b, isinstance(b, SignalTower))\nb.set_color(SignalTower.RED, SignalTower.ON)\n"
+            "cte_thread(lambda: None)\n")
+    assert s["console"] == "True True\n" and not s["errors"]
+    assert s["signal_tower"]["leds"]["red"] == "on"

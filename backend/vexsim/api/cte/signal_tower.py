@@ -65,5 +65,9 @@ class SignalTower:
         self._rt.callbacks_registered += 1
         return Event()
 
+    def __call__(self):
+        """``arm.signal_tower()`` - lets the arm's tower be used as a method too."""
+        return self
+
     def installed(self) -> bool:
         return True
