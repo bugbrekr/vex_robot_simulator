@@ -15,9 +15,12 @@ Wants=docker.service
 
 [Service]
 WorkingDirectory=%h/VEX_Simulator
-# %t = $XDG_RUNTIME_DIR (/run/user/<uid>), where rootless dockerd puts its socket
-Environment=DOCKER_HOST=unix://%t/docker.sock
 Environment=VEXSIM_SANDBOX=docker
+# --- pick ONE container engine (must be the one you ran `vexsim sandbox build` with) ---
+# Rootless Docker: %t = $XDG_RUNTIME_DIR (/run/user/<uid>), where rootless dockerd puts its socket
+Environment=DOCKER_HOST=unix://%t/docker.sock
+# Podman: comment out the DOCKER_HOST line above (and After=/Wants= docker.service) and use
+# Environment=VEXSIM_DOCKER=podman
 # Environment=VEXSIM_SANDBOX_MEMORY=512m VEXSIM_SANDBOX_CPUS=1 VEXSIM_SANDBOX_PIDS=128
 ExecStart=%h/VEX_Simulator/.venv/bin/vexsim serve --host 127.0.0.1 --port 8000 --base-path /vex_cte
 Restart=on-failure

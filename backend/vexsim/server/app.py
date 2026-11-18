@@ -53,6 +53,11 @@ SANDBOX = SandboxConfig.from_env()
 
 @contextlib.asynccontextmanager
 async def _lifespan(_app):
+    if SANDBOX.mode == "docker":
+        code, out = await SANDBOX._docker("image", "inspect", "--format", "{{.Id}} {{.Created}}",
+                                          SANDBOX.image)
+        info = out.strip()[:80] if code == 0 else f"NOT FOUND ({out.strip()[:120]})"
+        print(f"vexsim: sandbox via '{SANDBOX.docker}', image {SANDBOX.image}: {info}")
     removed = await SANDBOX.cleanup_leftovers()  # containers orphaned by a crashed server
     if removed:
         print(f"vexsim: removed {removed} leftover worker container(s)")

@@ -137,4 +137,11 @@ uv run vexsim sandbox build && uv run vexsim sandbox check
 In `deploy/vexsim-user.service`, replace the `DOCKER_HOST` line with
 `Environment=VEXSIM_DOCKER=podman` and drop the `After=/Wants=docker.service` lines (Podman needs no daemon).
 
+**Don't skip `VEXSIM_DOCKER=podman` in the unit.** Without it the server runs `docker`. If that
+command exists (real Docker, or `podman-docker` pointed at another socket), it uses a different
+image store, and sessions keep running an old worker image even after `vexsim sandbox build`.
+At startup the server logs the engine and image it uses (`journalctl --user -u vexsim`):
+`vexsim: sandbox via 'podman', image vexsim-worker:latest: <id> <created>`. The created time
+should match your last build.
+
 **Stronger isolation:** if the host has gVisor installed, add `VEXSIM_SANDBOX_ARGS=--runtime=runsc` so syscalls go through a user-space kernel.
