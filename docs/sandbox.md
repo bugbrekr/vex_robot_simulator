@@ -55,11 +55,27 @@ Rebuild the image (`vexsim sandbox build`) whenever you update the simulator cod
 
 With normal (rootful) Docker, any account that can talk to the daemon is effectively root. That includes a `docker` group member such as the server's account. With **rootless** Docker, the daemon and every container run as one unprivileged user. Even a container breakout only reaches that user.
 
-The steps below are for Debian/Ubuntu with Docker's apt repository. Other distros differ only in the packages.
+The steps below are for Debian/Ubuntu. Other distros differ only in the packages. `docker-ce` and
+`docker-ce-rootless-extras` are **not** in the Debian/Ubuntu archives; they come from Docker's own
+apt repository, which step 0 adds. If you'd rather not add a third-party repository, use
+[Podman](#podman-no-extra-repository) instead.
 
 ```bash
+# 0. add Docker's apt repository (once)
+#    remove distro packages that conflict with docker-ce (ignore "not installed" messages)
+sudo apt-get remove -y docker.io docker-doc docker-compose podman-docker containerd runc
+sudo apt-get update && sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+. /etc/os-release        # ID=ubuntu|debian; derivatives (Mint, Pop!_OS...): use ubuntu / debian below
+sudo curl -fsSL "https://download.docker.com/linux/$ID/gpg" -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+https://download.docker.com/linux/$ID ${UBUNTU_CODENAME:-$VERSION_CODENAME} stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+
 # 1. packages (as root)
-sudo apt-get install -y uidmap dbus-user-session docker-ce docker-ce-rootless-extras
+sudo apt-get install -y uidmap dbus-user-session docker-ce docker-ce-cli containerd.io docker-ce-rootless-extras
 #    optional: turn off the rootful daemon if nothing else needs it
 sudo systemctl disable --now docker.service docker.socket
 
@@ -103,6 +119,21 @@ nginx (`deploy/nginx-vexsim.conf`) still proxies to `127.0.0.1:8000`.
 - **`Cannot connect to the Docker daemon`:** `DOCKER_HOST` isn't set to the rootless socket. The user unit sets it for you.
 - **Every session's first start takes about a second:** that's the cost of a fresh container. The scene then persists across runs inside that container.
 
-**Podman** works the same way. Set `VEXSIM_DOCKER=podman`; Podman is rootless by default.
+## Podman (no extra repository)
+
+Podman is in the normal Debian/Ubuntu archives, runs rootless by default, and accepts the same
+flags. Use the same `vexsim` account, linger and cgroup delegation (steps 2–3 above), then:
+
+```bash
+sudo apt-get install -y podman uidmap slirp4netns catatonit   # catatonit provides --init
+sudo machinectl shell vexsim@
+podman info | grep -iE 'rootless|cgroupVersion'                # expect rootless: true, v2
+cd ~/VEX_Simulator
+export VEXSIM_DOCKER=podman
+uv run vexsim sandbox build && uv run vexsim sandbox check
+```
+
+In `deploy/vexsim-user.service`, replace the `DOCKER_HOST` line with
+`Environment=VEXSIM_DOCKER=podman` and drop the `After=/Wants=docker.service` lines (Podman needs no daemon).
 
 **Stronger isolation:** if the host has gVisor installed, add `VEXSIM_SANDBOX_ARGS=--runtime=runsc` so syscalls go through a user-space kernel.
