@@ -38,15 +38,80 @@ def _run(args) -> int:
 
 
 def _serve(args) -> int:
-    import os
-
     import uvicorn
 
     os.environ["VEXSIM_BASE_PATH"] = args.base_path
+    if args.sandbox:
+        os.environ["VEXSIM_SANDBOX"] = args.sandbox
+    print(f"VEX Simulator sandbox: {os.environ.get('VEXSIM_SANDBOX', 'none')}")
     print(f"VEX Simulator: http://{args.host}:{args.port}/{args.base_path.strip('/')}/")
     uvicorn.run("vexsim.server.app:app", host=args.host, port=args.port, reload=args.reload,
                 proxy_headers=True, forwarded_allow_ips=args.forwarded_allow_ips)
     return 0
+
+
+# Runs inside a sandbox container: each line is "name<TAB>ok<TAB>detail".
+_PROBE = r"""
+import os, socket
+def rep(name, ok, detail=""): print(f"{name}\t{int(bool(ok))}\t{detail}", flush=True)
+rep("unprivileged user", os.getuid() != 0, f"uid={os.getuid()}")
+try:
+    socket.create_connection(("1.1.1.1", 53), timeout=2); rep("no network", False, "connected out!")
+except OSError as e:
+    rep("no network", True, type(e).__name__)
+try:
+    open("/opt/vexsim/x", "w"); rep("read-only filesystem", False, "/opt writable")
+except OSError:
+    rep("read-only filesystem", True)
+try:
+    open("/tmp/x", "w").write("ok"); rep("scratch /tmp", True)
+except OSError as e:
+    rep("scratch /tmp", False, str(e))
+def cg(path):
+    try: return open(path).read().strip()
+    except OSError: return "?"
+rep("memory limit", cg("/sys/fs/cgroup/memory.max") not in ("max", "?"), cg("/sys/fs/cgroup/memory.max"))
+rep("process limit", cg("/sys/fs/cgroup/pids.max") not in ("max", "?"), cg("/sys/fs/cgroup/pids.max"))
+from vexsim.runner.worker import Worker
+code = "from vex import *\narm = Arm()\narm.move_inc(50, 0, 0)\nprint(arm.get_x())\n"
+s = Worker("cte", "cte_tile", code).run_headless()
+out = s["console"].strip()
+rep("simulation runs", out == "170.0" and not s["errors"], out or s["errors"])
+"""
+
+
+def _sandbox(args) -> int:
+    import subprocess
+
+    from vexsim.server.sandbox import SandboxConfig
+
+    os.environ["VEXSIM_SANDBOX"] = "docker"
+    cfg = SandboxConfig.from_env()
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if args.action == "build":
+        cmd = [cfg.docker, "build", "-f", os.path.join(root, "deploy", "worker.Dockerfile"),
+               "-t", cfg.image, root]
+        print("$", " ".join(cmd))
+        return subprocess.call(cmd)
+    # check
+    cmd = cfg.docker_run_args("vexsim-check") + ["python", "-c", _PROBE]
+    print("$", " ".join(cmd[:-1]), "<probe>")
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        print(f"{cfg.docker}: not found - install Docker/Podman or set VEXSIM_DOCKER")
+        return 2
+    rows = [line.split("\t") for line in res.stdout.splitlines() if line.count("\t") == 2]
+    for name, ok, detail in rows:
+        print(f"  [{'ok' if ok == '1' else 'FAIL'}] {name}  {detail}")
+    if res.returncode != 0 or not rows:
+        print(res.stderr.strip() or f"exit code {res.returncode}")
+        if "cgroup" in res.stderr or "memory" in res.stderr.lower():
+            print("hint: rootless Docker needs cgroup v2 controller delegation for --memory/--cpus/"
+                  "--pids-limit (see docs/sandbox.md), or set VEXSIM_SANDBOX_MEMORY= "
+                  "VEXSIM_SANDBOX_CPUS= VEXSIM_SANDBOX_PIDS= to run without limits.")
+        return 1
+    return 0 if all(ok == "1" for _, ok, _ in rows) else 1
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -68,8 +133,12 @@ def main(argv: list[str] | None = None) -> None:
                    help="URL path the app is served under (default /vex_cte)")
     s.add_argument("--forwarded-allow-ips", default="127.0.0.1",
                    help="proxies trusted for X-Forwarded-* headers (your nginx)")
+    s.add_argument("--sandbox", choices=["none", "docker"],
+                   help="run user code in throw-away containers (default: $VEXSIM_SANDBOX or none)")
+    sb = sub.add_parser("sandbox", help="build / verify the Docker sandbox for user code")
+    sb.add_argument("action", choices=["build", "check"])
     args = ap.parse_args(argv)
-    sys.exit(_run(args) if args.cmd == "run" else _serve(args))
+    sys.exit({"run": _run, "serve": _serve, "sandbox": _sandbox}[args.cmd](args))
 
 
 if __name__ == "__main__":

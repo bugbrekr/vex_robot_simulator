@@ -1,0 +1,108 @@
+# Sandboxing user code (Docker / rootless Docker / Podman)
+
+The simulator runs the Python that people type, so on a shared server that code must not run as
+a normal process.
+
+**With `VEXSIM_SANDBOX=docker`, each browser session gets its own throw-away container.** It holds the simulation engine and the user's program. The web server stays on the host and only relays messages.
+
+```
+browser ⇄ nginx ⇄ vexsim serve (host) ⇄ stdin/stdout ⇄ docker run --rm -i vexsim-worker   (one per session)
+```
+
+The worker talks only JSON lines over stdin/stdout, so the container needs nothing else. It is started with these restrictions:
+
+| Restriction | Flag |
+|---|---|
+| No network (no LAN, no internet) | `--network none` |
+| No files shared with the host (no volumes or mounts) | – |
+| Read-only root filesystem, plus a 16 MB `noexec` `/tmp` | `--read-only --tmpfs /tmp` |
+| Runs as `nobody`, all capabilities dropped, no privilege escalation | `--user 65534:65534 --cap-drop ALL --security-opt no-new-privileges` |
+| Resource limits (configurable) | `--memory 512m --memory-swap 512m --cpus 1 --pids-limit 128` |
+| Proper signal handling | `--init` |
+| Removed when the session ends | `--rm`, plus `docker rm -f` on disconnect or reset |
+| Orphans from a crashed server are removed at startup | label `vexsim.worker=1` |
+
+The image (`deploy/worker.Dockerfile`) contains only `python:3.12-slim`, numpy, pyyaml and the
+simulation package. The web server is deliberately left out.
+
+## Configuration
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `VEXSIM_SANDBOX` | `none` | `docker` turns the sandbox on (or `vexsim serve --sandbox docker`) |
+| `VEXSIM_DOCKER` | `docker` | Container CLI, e.g. `podman` |
+| `DOCKER_HOST` | – | Daemon socket. For rootless Docker: `unix:///run/user/<uid>/docker.sock` |
+| `VEXSIM_SANDBOX_IMAGE` | `vexsim-worker:latest` | Worker image |
+| `VEXSIM_SANDBOX_MEMORY` / `_CPUS` / `_PIDS` | `512m` / `1` / `128` | Limits. An empty value means no limit |
+| `VEXSIM_SANDBOX_ARGS` | – | Extra `docker run` arguments, e.g. `--runtime=runsc` for gVisor |
+
+```bash
+uv run vexsim sandbox build     # docker build -f deploy/worker.Dockerfile -t vexsim-worker:latest .
+uv run vexsim sandbox check     # runs a probe in a real sandbox container; expected report:
+#   [ok] unprivileged user  uid=65534
+#   [ok] no network  OSError
+#   [ok] read-only filesystem
+#   [ok] scratch /tmp
+#   [ok] memory limit  536870912
+#   [ok] process limit  128
+#   [ok] simulation runs  170.0
+uv run vexsim serve --sandbox docker
+```
+
+Rebuild the image (`vexsim sandbox build`) whenever you update the simulator code.
+
+## Rootless Docker (recommended)
+
+With normal (rootful) Docker, any account that can talk to the daemon is effectively root. That includes a `docker` group member such as the server's account. With **rootless** Docker, the daemon and every container run as one unprivileged user. Even a container breakout only reaches that user.
+
+The steps below are for Debian/Ubuntu with Docker's apt repository. Other distros differ only in the packages.
+
+```bash
+# 1. packages (as root)
+sudo apt-get install -y uidmap dbus-user-session docker-ce docker-ce-rootless-extras
+#    optional: turn off the rootful daemon if nothing else needs it
+sudo systemctl disable --now docker.service docker.socket
+
+# 2. a dedicated account (useradd also allocates its /etc/subuid + /etc/subgid ranges)
+sudo useradd --create-home --shell /bin/bash vexsim
+grep vexsim /etc/subuid /etc/subgid          # must print a range for both
+sudo loginctl enable-linger vexsim           # user services run without anyone logged in
+
+# 3. let user services set CPU / memory / pids limits (cgroup v2 delegation)
+sudo mkdir -p /etc/systemd/system/user@.service.d
+printf '[Service]\nDelegate=cpu cpuset io memory pids\n' | \
+  sudo tee /etc/systemd/system/user@.service.d/delegate.conf
+sudo systemctl daemon-reload
+
+# 4. start rootless dockerd as vexsim - use a real login session (machinectl or ssh),
+#    plain `sudo su` lacks the systemd user session the setup tool needs
+sudo machinectl shell vexsim@
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+docker info | grep -iE 'rootless|cgroup'     # expect "rootless" and "Cgroup Version: 2"
+cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers
+#                                            # expect: cpuset cpu io memory pids
+
+# 5. install the simulator as vexsim and verify the sandbox
+git clone <your repo> ~/VEX_Simulator && cd ~/VEX_Simulator
+uv sync && (cd frontend && npm ci && npm run build)
+uv run vexsim sandbox build
+uv run vexsim sandbox check
+
+# 6. run it as a user service beside rootless dockerd
+mkdir -p ~/.config/systemd/user
+cp deploy/vexsim-user.service ~/.config/systemd/user/vexsim.service
+systemctl --user daemon-reload && systemctl --user enable --now vexsim
+```
+
+nginx (`deploy/nginx-vexsim.conf`) still proxies to `127.0.0.1:8000`.
+
+**Troubleshooting**
+- **`--memory`, `--cpus` or `--pids-limit` errors in rootless mode** (e.g. "cgroup … not supported"): controller delegation is missing (step 3), or the host is on cgroup v1. Fix the delegation, or run without limits by setting `VEXSIM_SANDBOX_MEMORY=`, `VEXSIM_SANDBOX_CPUS=` and `VEXSIM_SANDBOX_PIDS=` (empty values). The limits are the protection against runaway programs, so delegation is worth fixing.
+- **`Cannot connect to the Docker daemon`:** `DOCKER_HOST` isn't set to the rootless socket. The user unit sets it for you.
+- **Every session's first start takes about a second:** that's the cost of a fresh container. The scene then persists across runs inside that container.
+
+**Podman** works the same way. Set `VEXSIM_DOCKER=podman`; Podman is rootless by default.
+
+**Stronger isolation:** if the host has gVisor installed, add `VEXSIM_SANDBOX_ARGS=--runtime=runsc` so syscalls go through a user-space kernel.

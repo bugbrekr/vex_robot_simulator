@@ -6,6 +6,14 @@
 #   journalctl -u vexsim -f
 #
 # Build first:  uv sync  &&  (cd frontend && npm ci && npm run build)
+#
+# This system unit runs user code as plain subprocesses (hardened by the options below).
+# For real isolation run user code in containers - preferably with ROOTLESS Docker and the
+# user unit deploy/vexsim-user.service instead of this file (see docs/sandbox.md).
+# With rootful Docker you could add the lines below, but the service user then needs the
+# `docker` group, which is root-equivalent - not recommended:
+#   Environment=VEXSIM_SANDBOX=docker
+#   SupplementaryGroups=docker
 
 [Unit]
 Description=VEX Simulator (FastAPI backend)

@@ -13,6 +13,7 @@ The frontend only uses *relative* URLs, so a reverse proxy may put any prefix in
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from vexsim.core.config import list_examples, list_scenarios, load_example, load_scenario
+from vexsim.server.sandbox import SandboxConfig
 from vexsim.server.sessions import Session
 
 BASE_PATH = "/" + os.environ.get("VEXSIM_BASE_PATH", "/vex_cte").strip("/")
@@ -46,8 +48,19 @@ class _Frontend(StaticFiles):
         return resp
 
 
+SANDBOX = SandboxConfig.from_env()
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(_app):
+    removed = await SANDBOX.cleanup_leftovers()  # containers orphaned by a crashed server
+    if removed:
+        print(f"vexsim: removed {removed} leftover worker container(s)")
+    yield
+
+
 app = FastAPI(title="VEX Simulator", docs_url=f"{BASE_PATH}/api/docs",
-              openapi_url=f"{BASE_PATH}/api/openapi.json", redirect_slashes=False)
+              openapi_url=f"{BASE_PATH}/api/openapi.json", redirect_slashes=False, lifespan=_lifespan)
 router = APIRouter(prefix=BASE_PATH)
 
 
@@ -84,7 +97,8 @@ def example(platform: str, eid: str) -> dict:
 
 @router.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "base_path": BASE_PATH, "frontend": FRONTEND_DIST.is_dir(), "build": _build_id()}
+    return {"ok": True, "base_path": BASE_PATH, "frontend": FRONTEND_DIST.is_dir(), "build": _build_id(),
+            "sandbox": SANDBOX.mode}
 
 
 @router.websocket("/ws/{platform}")
@@ -92,7 +106,7 @@ async def ws_session(ws: WebSocket, platform: str) -> None:
     await ws.accept()
     # tell the page which frontend build is being served (stale tabs offer a reload)
     await ws.send_text(json.dumps({"type": "server", "build": _build_id()}))
-    session = Session(ws.send_text, platform)
+    session = Session(ws.send_text, platform, SANDBOX)
     try:
         while True:
             msg = json.loads(await ws.receive_text())

@@ -1,44 +1,41 @@
-"""One Session per browser WebSocket: owns a worker subprocess and relays messages."""
+"""One Session per browser WebSocket: owns a worker (subprocess or sandbox container) and relays
+messages. All traffic is JSON lines over the worker's stdin/stdout - no files are shared, which is
+what lets the worker run in a container with no mounts and no network (see sandbox.py)."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import json
-import os
-import sys
-import tempfile
 from collections.abc import Awaitable, Callable
+
+from vexsim.server.sandbox import SandboxConfig
 
 # Everything except "reset" (new scene = new worker process) goes to the persistent worker.
 LOCAL = {"reset"}
 
 
 class Session:
-    def __init__(self, send: Callable[[str], Awaitable[None]], platform: str = "cte"):
+    def __init__(self, send: Callable[[str], Awaitable[None]], platform: str = "cte",
+                 sandbox: SandboxConfig | None = None):
         self.send = send
         self.platform = platform
+        self.sandbox = sandbox or SandboxConfig.from_env()
         self.proc: asyncio.subprocess.Process | None = None
+        self.container: str | None = None
         self._tasks: list[asyncio.Task] = []
-        self._code_file: str | None = None
         self.speed = 1.0
         self.scenario = "cte_tile"
 
     async def start(self, scenario: str, code: str | None = None, tool: str | None = None,
                     marker: float | None = None) -> None:
         await self.kill()
-        args = [sys.executable, "-u", "-m", "vexsim.runner.worker", "--platform", self.platform,
-                "--scenario", scenario, "--speed", str(self.speed)]
+        worker_args = ["--platform", self.platform, "--scenario", scenario, "--speed", str(self.speed)]
         if tool in ("magnet", "pen"):
-            args += ["--mounted-tool", tool]
+            worker_args += ["--mounted-tool", tool]
         if marker is not None:
-            args += ["--marker", str(float(marker))]
-        if code is not None:
-            fd, path = tempfile.mkstemp(prefix="vexsim_", suffix=".py")
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(code)
-            self._code_file = path
-            args += ["--code-file", path]
+            worker_args += ["--marker", str(float(marker))]
+        args, self.container = self.sandbox.worker_command(worker_args)
         self.proc = await asyncio.create_subprocess_exec(
             *args,
             stdin=asyncio.subprocess.PIPE,
@@ -50,6 +47,8 @@ class Session:
             asyncio.create_task(self._pump_stdout(self.proc)),
             asyncio.create_task(self._pump_stderr(self.proc)),
         ]
+        if code is not None:
+            await self._to_worker({"type": "run", "code": code})
 
     async def _pump_stdout(self, proc) -> None:
         assert proc.stdout is not None
@@ -87,6 +86,9 @@ class Session:
 
     async def kill(self) -> None:
         proc, self.proc = self.proc, None
+        container, self.container = self.container, None
+        # remove the container first: killing the `docker run` client alone may leave it running
+        await self.sandbox.stop(container)
         if proc and proc.returncode is None:
             proc.kill()
             with contextlib.suppress(Exception):
@@ -100,7 +102,3 @@ class Session:
         for t in self._tasks:
             t.cancel()
         self._tasks = []
-        if self._code_file:
-            with contextlib.suppress(OSError):
-                os.unlink(self._code_file)
-            self._code_file = None

@@ -1,0 +1,5 @@
+# build context: only backend/vexsim is copied into the worker image
+*
+!backend/vexsim/**
+**/__pycache__
+**/*.pyc

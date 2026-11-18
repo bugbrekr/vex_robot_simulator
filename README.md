@@ -34,7 +34,7 @@ The frontend uses only relative URLs, so nginx can put any prefix in front, for 
 - `deploy/nginx-vexsim.conf` has the `location` blocks, including the WebSocket upgrade and a long read timeout.
 - `deploy/vexsim.service` is a hardened systemd unit for the backend, bound to `127.0.0.1:8000`.
 
-> ⚠️ The simulator executes the Python that users type **on the server**. Only expose it to trusted users: restrict it to your LAN or add `auth_basic` in nginx, and run it as an unprivileged user (the systemd unit shows how).
+> ⚠️ The simulator executes the Python that users type **on the server**. On a shared server, turn on the **Docker sandbox** (`vexsim serve --sandbox docker`). Each session's code then runs in its own throw-away container with no network, a read-only filesystem, no capabilities, an unprivileged user and CPU/memory/process limits. Use **rootless Docker** for that: see [docs/sandbox.md](docs/sandbox.md), which also covers `deploy/vexsim-user.service`. Restricting access in nginx (LAN only and/or `auth_basic`) is still a good idea.
 
 ## What's simulated
 
