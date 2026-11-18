@@ -15,6 +15,7 @@ Environment (all optional):
   VEXSIM_SANDBOX_CPUS     CPU limit, e.g. "1"        ("" = no limit)
   VEXSIM_SANDBOX_PIDS     max processes/threads, e.g. "128" ("" = no limit)
   VEXSIM_SANDBOX_ARGS     extra `docker run` arguments (shell-quoted)
+  VEXSIM_FRAME_HZ         UI frame rate, passed into the container (default 30)
 """
 
 from __future__ import annotations
@@ -79,6 +80,8 @@ class SandboxConfig:
             args += ["--cpus", self.cpus]
         if self.pids:
             args += ["--pids-limit", self.pids]
+        if os.environ.get("VEXSIM_FRAME_HZ"):
+            args += ["--env", f"VEXSIM_FRAME_HZ={os.environ['VEXSIM_FRAME_HZ']}"]
         return args + self.extra + [self.image]
 
     def worker_command(self, worker_args: list[str]) -> tuple[list[str], str | None]:

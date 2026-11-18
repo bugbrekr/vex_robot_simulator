@@ -35,6 +35,7 @@ simulation package. The web server is deliberately left out.
 | `VEXSIM_SANDBOX_IMAGE` | `vexsim-worker:latest` | Worker image |
 | `VEXSIM_SANDBOX_MEMORY` / `_CPUS` / `_PIDS` | `512m` / `1` / `128` | Limits. An empty value means no limit |
 | `VEXSIM_SANDBOX_ARGS` | – | Extra `docker run` arguments, e.g. `--runtime=runsc` for gVisor |
+| `VEXSIM_FRAME_HZ` | `30` | State updates per second sent to the browser. The browser interpolates between them, so 30 is already smooth; raise it (e.g. `60`) only for lower latency while dragging |
 
 ```bash
 uv run vexsim sandbox build     # docker build -f deploy/worker.Dockerfile -t vexsim-worker:latest .

@@ -1,6 +1,7 @@
 import "./styles.css";
 import * as THREE from "three";
 import type { ArmDesc, FrameMsg, RunState, Scene, ServerMsg, TowerDesc, WorldDesc } from "./net/protocol";
+import { FrameInterpolator } from "./net/interp";
 import { SimSession } from "./net/session";
 import { ArmView } from "./scene/armView";
 import { ManualDrag } from "./scene/manualDrag";
@@ -85,7 +86,8 @@ objectDrag.setGhostColor(settings.value.cubeColor);
 const keepUpright = $<HTMLInputElement>("keep-upright");
 let uprightTouched = false; // follow the mounted tool (pen -> on) until the user picks
 keepUpright.onchange = () => { uprightTouched = true; };
-const drag = new ManualDrag(viewport, (pos) => session.send({ type: "drag", pos, upright: keepUpright.checked }), () => session.send({ type: "drag_end" }));
+const drag = new ManualDrag(viewport, (pos) => { draggingArm = true; session.send({ type: "drag", pos, upright: keepUpright.checked }); },
+  () => { draggingArm = false; session.send({ type: "drag_end" }); });
 const trail = new Trail();
 viewport.scene.add(trail.line);
 const simPanel = new SimPanel($("sim"), (m) => session.send(m), settings);
@@ -138,14 +140,33 @@ function buildScene(scene: Scene): void {
   renderInfo(scene);
 }
 
-function applyFrame(f: FrameMsg): void {
+// ---------------------------------------------------------------- frame handling
+// Frames are split in two paths:
+//  * applyFrame(): on arrival - panels, text readouts, discrete state, ink (exactly once)
+//  * render ticks: the 3D view plays an interpolated stream slightly behind the newest frame,
+//    which hides network jitter and gives display-rate smooth motion.
+const interp = new FrameInterpolator();
+let draggingArm = false;
+
+viewport.onTick((dt) => {
+  // stay closer to "live" while the user is steering the arm by hand
+  interp.lagWall = draggingArm ? 0.04 : 0.1;
+  const f = interp.sample(dt);
+  if (!f) return;
   if (f.arm && armView) {
     armView.update(f.arm);
+    drag.setTcp(f.arm.tip);
+    if (settings.value.trail) trail.push(f.arm.tip);
+  }
+  if (f.world && objectsView) objectsView.update(f.world.objects);
+});
+
+function applyFrame(f: FrameMsg): void {
+  interp.push(f);
+  if (f.arm && armView) {
     for (const [stroke, p] of f.arm.pen_points) pen.add(stroke, p);
     pendant.update(f.arm);
     pendant.setPhase(f.phase);
-    drag.setTcp(f.arm.tip);
-    if (settings.value.trail) trail.push(f.arm.tip);
     const manual = f.arm.manual && runState !== "running";
     manualOn = manual;
     if (!uprightTouched) keepUpright.checked = f.arm.mounted_tool === "pen";
@@ -153,7 +174,6 @@ function applyFrame(f: FrameMsg): void {
     $("manual-banner").hidden = !manual;
     $("sim-tcp").textContent = `x ${f.arm.tcp[0].toFixed(0)}  y ${f.arm.tcp[1].toFixed(0)}  z ${f.arm.tcp[2].toFixed(0)}`;
   }
-  if (f.world && objectsView) objectsView.update(f.world.objects);
   simPanel.update(f);
   $("sim-paused").hidden = !f.paused;
   if (f.signal_tower) towerView?.update(f.signal_tower);
@@ -185,7 +205,7 @@ session.on((msg: ServerMsg) => {
       // the server is serving a newer build than this tab is running
       if (msg.build && __BUILD_ID__ !== "dev" && msg.build !== __BUILD_ID__) showReloadBanner();
       break;
-    case "hello": buildScene(msg.scene); setConnected(true); break;
+    case "hello": interp.reset(); buildScene(msg.scene); setConnected(true); break;
     case "frame": applyFrame(msg); break;
     case "console": consolePanel.print(msg.text); break;
     case "warning": consolePanel.warn(msg.text); break;
@@ -466,6 +486,8 @@ void init();
 session.on((m) => { if (m.type === "frame") lastFrame = m; });
 (window as unknown as { __vexsim: unknown }).__vexsim = {
   frame: () => lastFrame,
+  /** tool tip as currently drawn (interpolated) */
+  drawnTip: () => drag.handle.position.toArray(),
   camera(pos: [number, number, number], target: [number, number, number]) {
     viewport.camera.position.set(...pos);
     viewport.controls.target.set(...target);

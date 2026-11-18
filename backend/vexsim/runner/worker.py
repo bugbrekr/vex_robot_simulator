@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import os
 import queue
 import sys
 import threading
@@ -30,7 +31,10 @@ from vexsim.core.engine import SimEngine
 from vexsim.core.transforms import rpy_to_matrix
 from vexsim.robots.cte_arm.kinematics import MAGNET, PEN, matrix_to_rpy_deg
 
-FRAME_INTERVAL = 1 / 30  # wall seconds between frames sent to the UI
+# UI frame rate (the browser interpolates between frames, so 30 Hz already looks smooth)
+FRAME_HZ = max(5.0, min(120.0, float(os.environ.get("VEXSIM_FRAME_HZ", "30"))))
+FRAME_INTERVAL = 1 / FRAME_HZ  # wall seconds between frames sent to the UI
+FRAME_SLACK = 0.004  # emit a step early rather than a whole 10 ms step late (steady cadence)
 PENDANT_CMDS = ("jog", "tool", "safe", "manual", "drag", "drag_end")
 OBJECT_CMDS = ("add_object", "grab_object", "move_object", "drop_object", "remove_object",
                "clear_objects")
@@ -394,8 +398,9 @@ class Worker:
         if not self.interactive and self.state in ("finished", "stopped", "idle"):
             self.quit = True
         now = time.perf_counter()
-        if self.interactive and now - self._last_frame >= FRAME_INTERVAL:
-            self._last_frame = now
+        if self.interactive and now - self._last_frame >= FRAME_INTERVAL - FRAME_SLACK:
+            # advance by the interval (not to `now`) so the cadence doesn't drift
+            self._last_frame = max(self._last_frame + FRAME_INTERVAL, now - FRAME_INTERVAL)
             self._flush_console()
             self.emit(self.frame())
 

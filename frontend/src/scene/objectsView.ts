@@ -72,6 +72,7 @@ export class ObjectsView {
         this.entries.set(o.id, e);
         this.root.add(e.mesh);
       }
+      if (o.grabbed) continue; // being dragged here: ObjectDrag positions it locally
       e.mesh.position.set(o.pos[0], o.pos[1], o.pos[2]);
       e.mesh.quaternion.set(o.quat[0], o.quat[1], o.quat[2], o.quat[3]);
     }
