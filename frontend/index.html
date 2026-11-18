@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEX Arm Simulator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234d90f0'/%3E%3Cpath d='M9 25h12M11 25v-4h8v4M15 21l-4-10 10-5' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='6' r='2.2' fill='%2353d769'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <div class="tb-left">
+        <div class="wordmark" title="VEX Arm Simulator">VEX<span>sim</span><small>CTE</small></div>
+        <nav id="menubar" class="menubar"></nav>
+      </div>
+      <div class="tb-center">
+        <input id="project-name" class="project-name" spellcheck="false" aria-label="Project name" />
+        <span id="save-state" class="save-state">Saved</span>
+      </div>
+      <div class="tb-right">
+        <button id="tb-device" class="tb-btn device" title="Simulated 6-Axis Arm">
+          <span class="ico" data-icon="arm"></span><span class="lbl">ARM</span>
+        </button>
+        <span class="tb-sep"></span>
+        <button id="tb-run" class="tb-btn" title="Run (Ctrl/Cmd+Enter)"><span class="ico" data-icon="run"></span><span class="lbl">RUN</span></button>
+        <button id="tb-step" class="tb-btn" disabled title="Step is not available for Python projects"><span class="ico" data-icon="step"></span><span class="lbl">STEP</span></button>
+        <button id="tb-stop" class="tb-btn" title="Stop"><span class="ico" data-icon="stop"></span><span class="lbl">STOP</span></button>
+        <span class="tb-sep"></span>
+        <button id="tb-share" class="tb-btn" title="Copy project code to clipboard"><span class="ico" data-icon="share"></span><span class="lbl">SHARE</span></button>
+        <button id="tb-download" class="tb-btn" title="Save project to your computer"><span class="ico" data-icon="download"></span><span class="lbl">SAVE</span></button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="pane editor-pane">
+        <div class="tabbar"><div class="tab active"><span class="py-dot"></span><span id="file-tab">main.py</span></div></div>
+        <div id="editor" class="editor"></div>
+        <div class="console-pane">
+          <div class="console-head">
+            <span class="console-title">Print Console</span>
+            <span class="console-actions">
+              <button id="console-clear" class="icon-btn" title="Clear"><span class="ico" data-icon="trash"></span></button>
+            </span>
+          </div>
+          <pre id="console" class="console"></pre>
+        </div>
+      </section>
+
+      <div class="splitter" id="split-1" title="Drag to resize"></div>
+
+      <section class="pane sim-pane">
+        <div class="tabbar sim-bar">
+          <div class="tab active"><span class="ico ico-sm" data-icon="map"></span>Simulation</div>
+          <label class="sim-ctl"><span class="lbl">Map</span> <select id="scenario"></select></label>
+          <label class="sim-ctl"><span class="lbl">Speed</span>
+            <select id="speed">
+              <option value="0.25">0.25×</option><option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option><option value="2">2×</option>
+              <option value="4">4×</option><option value="0">Max</option>
+            </select>
+          </label>
+          <span class="grow"></span>
+          <button id="sim-pause" class="icon-btn" title="Pause / resume the simulation"><span class="ico" data-icon="pause"></span></button>
+          <button id="sim-erase" class="icon-btn" title="Erase whiteboard"><span class="ico" data-icon="erase"></span></button>
+          <button id="sim-reset" class="icon-btn" title="Reset simulation (reload map)"><span class="ico" data-icon="reset"></span></button>
+          <button id="sim-open" class="icon-btn sim-accent" title="Simulation controls & appearance"><span class="ico" data-icon="sliders"></span></button>
+          <span class="tb-sep dark"></span>
+          <button id="view-3d" class="icon-btn" title="3D view"><span class="ico" data-icon="camera3d"></span></button>
+          <button id="view-top" class="icon-btn" title="Top view"><span class="ico" data-icon="cameraTop"></span></button>
+          <button id="view-side" class="icon-btn" title="Side view"><span class="ico" data-icon="cameraSide"></span></button>
+        </div>
+        <div class="sim-body">
+          <div id="viewport" class="viewport"></div>
+          <div id="manual-banner" class="manual-banner" hidden>
+            <span class="ico ico-sm" data-icon="hand"></span>
+            Manual Mode · drag the arm · <kbd>Shift</kbd> up/down
+            <label class="mb-toggle" title="Hold the tool perpendicular to the board while dragging (V)"><input type="checkbox" id="keep-upright"> keep tool vertical <kbd>V</kbd></label>
+            <span class="mb-keys"><kbd>C</kbd> copy xyz · <kbd>M</kbd> add move_to</span>
+          </div>
+          <div class="sim-status">
+            <span id="sim-state" class="pill idle">idle</span>
+            <span id="sim-time">t = 0.00 s</span>
+            <span id="sim-tcp"></span>
+            <span id="sim-paused" class="pill paused" hidden>paused</span>
+          </div>
+        </div>
+      </section>
+
+      <aside id="panel" class="side">
+        <div class="side-head">
+          <span id="panel-title" class="side-title">Teach Pendant</span>
+          <span class="side-icons">
+            <button class="side-ico" data-panel="code" title="Map & Info"><span class="ico" data-icon="code"></span></button>
+            <button class="side-ico" data-panel="monitor" title="Monitor"><span class="ico" data-icon="monitor"></span></button>
+            <button class="side-ico" data-panel="pendant" title="Teach Pendant"><span class="ico" data-icon="arm"></span></button>
+            <button class="side-ico" data-panel="help" title="Help"><span class="ico" data-icon="help"></span></button>
+            <button class="side-ico sim-ico" data-panel="sim" title="Simulation controls (not part of VEXcode)"><span class="ico" data-icon="sliders"></span></button>
+          </span>
+          <button id="panel-collapse" class="side-collapse" title="Close panel"><span class="ico" data-icon="chevronRight"></span></button>
+        </div>
+        <div class="side-body">
+          <div class="panel-page" data-page="pendant" id="pendant"></div>
+          <div class="panel-page" data-page="monitor" id="monitor" hidden></div>
+          <div class="panel-page" data-page="help" id="help" hidden></div>
+          <div class="panel-page" data-page="code" id="info" hidden></div>
+          <div class="panel-page" data-page="sim" id="sim" hidden></div>
+        </div>
+      </aside>
+      <aside id="strip" class="strip" hidden>
+        <button class="strip-ico" data-panel="code" title="Map & Info"><span class="ico" data-icon="code"></span></button>
+        <button class="strip-ico" data-panel="monitor" title="Monitor"><span class="ico" data-icon="monitor"></span></button>
+        <button class="strip-ico" data-panel="pendant" title="Teach Pendant"><span class="ico" data-icon="arm"></span></button>
+        <button class="strip-ico" data-panel="help" title="Help"><span class="ico" data-icon="help"></span></button>
+        <button class="strip-ico sim-ico" data-panel="sim" title="Simulation controls"><span class="ico" data-icon="sliders"></span></button>
+      </aside>
+    </main>
+    <input id="file-open" type="file" accept=".py,.txt" hidden />
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+# systemd unit for the VEX Simulator backend (listens on localhost only; nginx proxies to it).
+#
+#   sudo cp deploy/vexsim.service /etc/systemd/system/
+#   (edit User=, WorkingDirectory= and ExecStart= paths below)
+#   sudo systemctl daemon-reload && sudo systemctl enable --now vexsim
+#   journalctl -u vexsim -f
+#
+# Build first:  uv sync  &&  (cd frontend && npm ci && npm run build)
+
+[Unit]
+Description=VEX Simulator (FastAPI backend)
+After=network.target
+
+[Service]
+# A dedicated, unprivileged account is strongly recommended: user programs run as this user.
+User=vexsim
+Group=vexsim
+WorkingDirectory=/opt/VEX_Simulator
+ExecStart=/opt/VEX_Simulator/.venv/bin/vexsim serve --host 127.0.0.1 --port 8000 --base-path /vex_cte
+Restart=on-failure
+RestartSec=2
+
+# --- hardening: user code runs inside the worker processes this service spawns ---
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+# only loopback networking (nginx -> 127.0.0.1:8000); user code can't reach the LAN/internet
+IPAddressDeny=any
+IPAddressAllow=localhost
+# keep a runaway program from eating the machine
+MemoryMax=2G
+TasksMax=256
+CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target

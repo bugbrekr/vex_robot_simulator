@@ -1,0 +1,5 @@
+# Example projects (File > Load Example). `map` is the scenario the example is meant for.
+- {id: basic_moves, title: Basic moves, file: basic_moves.py, map: cte_tile, tool: magnet}
+- {id: pick_place, title: Pick and stack cubes, file: pick_place.py, map: cte_tile, tool: magnet}
+- {id: draw_square, title: Draw a square, file: draw_square.py, map: whiteboard, tool: pen}
+- {id: whiteboard_shapes, title: Whiteboard shapes, file: whiteboard_shapes.py, map: whiteboard, tool: pen}

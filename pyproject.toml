@@ -1,0 +1,34 @@
+[project]
+name = "vexsim"
+version = "0.1.0"
+description = "Simulator for VEX CTE 6-Axis Arm (and later VEX IQ 2nd gen) running VEXcode-style Python"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.1",
+    "pyyaml>=6.0",
+    "pydantic>=2.9",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+]
+
+[project.scripts]
+vexsim = "vexsim.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.8", "httpx>=0.28"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/vexsim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+src = ["backend"]
+extend-exclude = ["backend/vexsim/examples"]

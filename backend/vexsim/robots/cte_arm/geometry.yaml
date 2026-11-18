@@ -1,0 +1,61 @@
+# VEX CTE 6-Axis Arm geometry. All lengths in mm, angles in degrees.
+# Tags: REAL (official VEX), MEASURED (community), ESTIMATE (guess - tune freely).
+# See docs/specs/cte_hardware.md for sources.
+
+reach_advertised: 335            # REAL
+
+base:
+  shoulder_height: 84.0          # MEASURED  tile (z=0) -> J2 axis
+  shoulder_forward: 20.5         # MEASURED  J1 axis -> J2 axis, along +x at J1=0
+  flange_radius: 69.0            # MEASURED
+  flange_height: 13.0            # MEASURED
+  body_radius: 52.0              # MEASURED
+  body_height: 47.0              # MEASURED
+  turret_radius: 43.0            # MEASURED
+
+links:
+  upper_arm: 133.0               # MEASURED  J2 -> J3
+  forearm: 174.0                 # MEASURED  J3 -> J5 along forearm
+  forearm_offset: 28.0           # MEASURED  forearm axis above elbow axis
+  wrist_to_flange: 13.0          # MEASURED  J5 -> tool flange
+
+tools:
+  magnet:
+    length: 38.5                 # MEASURED  flange -> magnet face (TCP)
+  pen:
+    # VEX: "pen offset = distance from the top of the Pen Holder Tool (where it connects to the
+    # arm) to the marker tip; 0 puts the z-origin at the connection point".  The marker is held
+    # in a C-clamp that sits to the side of the tool axis (traced from the STEM Labs Unit 4 render).
+    lateral_offset: 22.0         # ESTIMATE  marker axis <- tool axis, towards ee +x ("forward")
+    marker_protrusion: 23.0      # REAL (VEX: ~23 mm for the kit marker) physical tip below mount
+    marker_length: 120.0         # ESTIMATE  visual: body length of the dry-erase marker
+    marker_diameter: 18.0        # ESTIMATE
+
+# Joint limits [min, max] deg and max speed at 100% (deg/s). All ESTIMATE.
+joints:
+  - {name: J1, desc: base yaw,      min: -170, max: 170, max_speed: 90}
+  - {name: J2, desc: shoulder,      min: -90,  max: 90,  max_speed: 75}
+  - {name: J3, desc: elbow,         min: -90,  max: 70,  max_speed: 90}
+  - {name: J4, desc: wrist roll,    min: -150, max: 150, max_speed: 150}
+  - {name: J5, desc: wrist pitch,   min: -120, max: 120, max_speed: 150}
+  - {name: J6, desc: tool roll,     min: -180, max: 180, max_speed: 180}
+
+motion:
+  max_linear_speed: 200.0        # ESTIMATE mm/s at 100 %
+  max_angular_speed: 120.0       # ESTIMATE deg/s (end-effector reorientation) at 100 %
+  accel_time: 0.25               # ESTIMATE s to reach cruise speed (trapezoid ramps)
+  default_speed: 50              # REAL %
+  position_tolerance: 1.0        # mm (real arm ~1-2 mm, KB)
+
+# Collision / workspace rules
+workspace:
+  floor_z: 0.0                   # tile surface
+  floor_margin: 0.0              # TCP may touch the tile (pen drawing / pick from tile)
+  link_floor_margin: 5.0         # elbow / wrist centre must stay this far above the tile
+  keepout:                       # DERIVED cylinders around the base the TCP / wrist may not enter
+    - {radius: 73.0, height: 59.0}
+    - {radius: 49.0, height: 104.0}
+
+# Pose used when a program starts (REAL safe position per community sim; tool pointing down)
+start_position: [120.0, 0.0, 100.0]
+start_orientation: [0.0, 0.0, 0.0]   # yaw, roll, pitch

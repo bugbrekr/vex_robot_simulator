@@ -1,0 +1,7 @@
+name: Whiteboard
+description: Dry-Erase Surface laid on the Tile. Mount the Pen Holder Tool (Teach Pendant, at the safe position) to draw - lift the pen (z > 0) between shapes. Erase the board from the simulation toolbar.
+arm: {}
+signal_tower: {location: 6}
+surface: whiteboard
+order: 2
+objects: []

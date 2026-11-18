@@ -1,0 +1,9 @@
+name: CTE Tile
+description: The 6-Axis Arm on a CTE Tile with the Signal Tower and three 25 mm AprilTag cubes. Drag more cubes in from the Simulation panel.
+order: 1
+arm: {}
+signal_tower: {location: 6}
+objects:
+  - {kind: cube, size: 25, location: 21}
+  - {kind: cube, size: 25, location: 22}
+  - {kind: cube, size: 25, location: 23}
