@@ -166,7 +166,10 @@ class Worker:
             self.stop_program(quiet=True)
         self.code = code
         self.rt = self._new_runtime()
-        sys.modules["vex"] = importlib.import_module(f"vexsim.api.{self.platform}")
+        api = importlib.import_module(f"vexsim.api.{self.platform}")
+        sys.modules["vex"] = api
+        if self.platform == "cte":
+            sys.modules["cte"] = api  # codeexp.vex.com projects use `from cte import *`
         rt_mod.install(self.rt)
         self._run_deadline = None if self.max_time is None else self.engine.t + self.max_time
         try:

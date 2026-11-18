@@ -8,16 +8,44 @@ Sources:
 Captured on 2026-11-18.
 
 ## Program header
+A new CTE Python project on codeexp.vex.com starts with this (user-supplied, real IDE):
 ```python
-from vex import *
+#region VEXcode Generated Robot Configuration
+from cte import *
+import math
+import random
+
+# Brain should be defined by default
 brain = Brain()
+
+# Robot configuration code
 arm = Arm()
-signal_tower_1 = SignalTower(Ports.PORT1)   # optional
+signal_tower = arm.signal_tower
+
+
+# Wait for sensor(s) to fully initialize
+wait(100, MSEC)
+
+#endregion VEXcode Generated Robot Configuration
+# (project banner comment)
+
+# Library imports
+from cte import *
+
+# Add project code in "main"
+def main():
+    arm.move_to(180, 0, 180)
+
+# CTE threads — Do not delete
+cte_thread(main)
 ```
+- The sim provides the same API as both `cte` and `vex`, so `from vex import *` keeps working.
+- `arm.signal_tower` is the tower wired to the arm. `SignalTower(Ports.PORT1)` gives the same tower.
 
 ## Console
 - Plain `print(...)` writes to the Print Console. Most CTE examples use this form.
 - `brain.print(value, precision=0)` is the V5/EXP-style call. `brain.clear()` clears the console. The sim supports both.
+- `print("\033[2J")` clears the console. The CTE docs use it in their timer examples. The sim also drops any other ANSI escape sequences.
 
 ## Timer (CTE form)
 

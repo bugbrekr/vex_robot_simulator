@@ -18,7 +18,8 @@ Captured on 2026-11-18.
 
 | Signature | Notes |
 |---|---|
-| `SignalTower(Ports.PORTx)` | Constructor |
+| `arm.signal_tower` | The tower wired to the arm. The codeexp.vex.com config uses `signal_tower = arm.signal_tower` |
+| `SignalTower(Ports.PORTx)` | Constructor (API docs form). In the sim it's the same tower |
 | `set_color(value, state)` | `value`: `SignalTower.RED`, `GREEN`, `BLUE`, `YELLOW`, `WHITE` or `ALL`. `state`: `SignalTower.ON`, `OFF` or `BLINK` |
 | `set_colors(r, y, g, b, w)` | Each argument is ON, OFF or BLINK. **Note the order: r, y, g, b, w** |
 | `pressing()` | bool, bumper held (EXP page) |

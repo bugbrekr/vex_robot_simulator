@@ -1,10 +1,31 @@
+#region VEXcode Generated Robot Configuration
+from cte import *
 import math
+import random
 
-from vex import *
-
+# Brain should be defined by default
 brain = Brain()
-arm = Arm()
 
+# Robot configuration code
+arm = Arm()
+signal_tower = arm.signal_tower
+
+
+# Wait for sensor(s) to fully initialize
+wait(100, MSEC)
+
+#endregion VEXcode Generated Robot Configuration
+# ------------------------------------------
+#
+#     Project:      whiteboard_shapes
+#    Author:       VEX
+#    Created:
+#    Description:  Draw a triangle and a circle on the whiteboard
+#
+# ------------------------------------------
+
+# Library imports
+from cte import *
 
 def line(x1, y1, x2, y2):
     arm.move_to(x1, y1, 10)   # hover above the start
@@ -13,6 +34,7 @@ def line(x1, y1, x2, y2):
     arm.move_inc(0, 0, 10)    # pen up
 
 
+# Add project code in "main"
 def main():
     arm.set_end_effector_type(Arm.PEN)
 
@@ -30,4 +52,5 @@ def main():
     arm.move_inc(0, 0, 20)
 
 
+# CTE threads — Do not delete
 cte_thread(main)

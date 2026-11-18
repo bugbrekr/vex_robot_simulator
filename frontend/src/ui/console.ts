@@ -15,6 +15,9 @@ export class ConsolePanel {
   }
 
   print(text: string): void {
+    // print("\033[2J") clears the console in VEXcode (used throughout the CTE docs); other ANSI
+    // escape sequences (cursor home, colours) are dropped
+    text = text.replace(/\x1b\[2J/g, "\x0c").replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
     const parts = text.split("\x0c"); // form feed = brain.clear()
     if (parts.length > 1) this.clear();
     this.append(parts[parts.length - 1]);

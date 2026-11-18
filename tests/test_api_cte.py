@@ -150,3 +150,45 @@ def test_missing_cte_thread_warns_but_still_runs(run):
     s = run(HEADER + "arm.move_inc(20, 0, 0)\nprint('x', arm.get_x())\n")
     assert s["console"].startswith("x 140")
     assert any("cte_thread(main)" in w for w in s["warnings"])
+
+
+CODEEXP_TEMPLATE = '''#region VEXcode Generated Robot Configuration
+from cte import *
+import math
+import random
+
+# Brain should be defined by default
+brain = Brain()
+
+# Robot configuration code
+arm = Arm()
+signal_tower = arm.signal_tower
+
+
+# Wait for sensor(s) to fully initialize
+wait(100, MSEC)
+
+#endregion VEXcode Generated Robot Configuration
+
+# Library imports
+from cte import *
+
+# Add project code in "main"
+def main():
+    signal_tower.set_color(SignalTower.BLUE, SignalTower.BLINK)
+    arm.move_to(180, 0, 180)
+    print("\\033[2J")
+    print(round(arm.get_z()))
+
+# CTE threads — Do not delete
+cte_thread(main)
+'''
+
+
+def test_codeexp_template_runs(run):
+    """The boilerplate of a new CTE Python project on codeexp.vex.com."""
+    s = run(CODEEXP_TEMPLATE)
+    assert not s["errors"] and not s["warnings"]
+    assert s["console"].endswith("180\n")
+    assert s["signal_tower"]["leds"]["blue"] == "blink"
+    assert s["arm"]["tcp"] == [180.0, 0.0, 180.0]

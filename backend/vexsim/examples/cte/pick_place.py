@@ -1,8 +1,31 @@
-from vex import *
+#region VEXcode Generated Robot Configuration
+from cte import *
+import math
+import random
 
+# Brain should be defined by default
 brain = Brain()
+
+# Robot configuration code
 arm = Arm()
-signal_tower = SignalTower(Ports.PORT1)
+signal_tower = arm.signal_tower
+
+
+# Wait for sensor(s) to fully initialize
+wait(100, MSEC)
+
+#endregion VEXcode Generated Robot Configuration
+# ------------------------------------------
+#
+#     Project:      pick_place
+#    Author:       VEX
+#    Created:
+#    Description:  Stack the three cubes with the Magnet Pickup Tool
+#
+# ------------------------------------------
+
+# Library imports
+from cte import *
 
 CUBE = 25  # mm
 
@@ -20,6 +43,7 @@ def place(x, y, level):
     arm.move_inc(0, 0, 40)
 
 
+# Add project code in "main"
 def main():
     signal_tower.set_color(SignalTower.YELLOW, SignalTower.BLINK)
     arm.set_speed(80)
@@ -31,4 +55,5 @@ def main():
     print("Stacked all cubes!")
 
 
+# CTE threads — Do not delete
 cte_thread(main)

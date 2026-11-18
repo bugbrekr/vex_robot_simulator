@@ -12,7 +12,7 @@ def test_scenarios_endpoint():
     assert ids == ["cte_tile", "whiteboard"]
     exs = c.get("/vex_cte/api/platforms/cte/examples").json()
     assert {e["map"] for e in exs} <= set(ids)
-    assert "from vex import" in c.get(f"/vex_cte/api/platforms/cte/examples/{exs[0]['id']}").json()["code"]
+    assert "from cte import" in c.get(f"/vex_cte/api/platforms/cte/examples/{exs[0]['id']}").json()["code"]
 
 
 def test_ws_run_program():

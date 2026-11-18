@@ -31,6 +31,16 @@ class Arm:
             raise RuntimeError("this scenario has no 6-Axis Arm")
         self._m = arms[0]
         self._rt = rt
+        self._tower = None
+
+    @property
+    def signal_tower(self):
+        """The Signal Tower wired to the arm (VEXcode CTE config: ``signal_tower = arm.signal_tower``)."""
+        if self._tower is None:
+            from vexsim.api.cte.signal_tower import SignalTower
+
+            self._tower = SignalTower()
+        return self._tower
 
     # ------------------------------------------------------------ helpers
     def _move(self, p, r, wait: bool, label: str) -> bool:

@@ -23,11 +23,11 @@ const API: [string, [string, string][]][] = [
     ["arm.control_stopped(callback)", "Run callback on control stop"],
   ]],
   ["Signal Tower", [
-    ["tower = SignalTower(Ports.PORT1)", ""],
-    ["tower.set_color(SignalTower.RED, SignalTower.ON)", "Colors: RED GREEN BLUE YELLOW WHITE ALL · ON OFF BLINK"],
-    ["tower.set_colors(r, y, g, b, w)", "Set every LED at once"],
-    ["tower.pressed(callback) / released(callback)", "Bumper events"],
-    ["tower.pressing()", "Is the bumper held?"],
+    ["signal_tower = arm.signal_tower", "The tower wired to the arm (SignalTower(Ports.PORT1) works too)"],
+    ["signal_tower.set_color(SignalTower.RED, SignalTower.ON)", "Colors: RED GREEN BLUE YELLOW WHITE ALL · ON OFF BLINK"],
+    ["signal_tower.set_colors(r, y, g, b, w)", "Set every LED at once"],
+    ["signal_tower.pressed(callback) / released(callback)", "Bumper events"],
+    ["signal_tower.pressing()", "Is the bumper held?"],
   ]],
   ["Brain & control", [
     ["cte_thread(main)", "Start the project: put your code in def main(): and end the file with this"],

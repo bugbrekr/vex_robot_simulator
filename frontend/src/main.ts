@@ -279,18 +279,40 @@ async function loadExample(id: string): Promise<void> {
       "Move to Safe Position, then change the End Effector in the Teach Pendant (or the Simulation panel).");
   }
 }
-const NEW_PROJECT = `from vex import *
+const NEW_PROJECT = `#region VEXcode Generated Robot Configuration
+from cte import *
+import math
+import random
 
+# Brain should be defined by default
 brain = Brain()
+
+# Robot configuration code
 arm = Arm()
-signal_tower = SignalTower(Ports.PORT1)
+signal_tower = arm.signal_tower
 
 
+# Wait for sensor(s) to fully initialize
+wait(100, MSEC)
+
+#endregion VEXcode Generated Robot Configuration
+# ------------------------------------------
+# 
+#     Project:      VEXcode Project
+#    Author:       VEX
+#    Created:
+#    Description:  VEXcode CTE Python Project
+# 
+# ------------------------------------------
+
+# Library imports
+from cte import *
+
+# Add project code in "main"
 def main():
-    # Begin project code
-    pass
+    arm.move_to(180, 0, 180)
 
-
+# CTE threads — Do not delete
 cte_thread(main)
 `;
 function newProject(): void {
