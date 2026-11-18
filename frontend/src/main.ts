@@ -285,7 +285,13 @@ brain = Brain()
 arm = Arm()
 signal_tower = SignalTower(Ports.PORT1)
 
-# Begin project code
+
+def main():
+    # Begin project code
+    pass
+
+
+cte_thread(main)
 `;
 function newProject(): void {
   if (!confirm("Start a new project? Unsaved changes in the editor will be replaced.")) return;

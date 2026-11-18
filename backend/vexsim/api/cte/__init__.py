@@ -15,6 +15,7 @@ from vexsim.api.common.constants import (
     TimeUnits,
 )
 from vexsim.api.cte.arm import Arm
+from vexsim.api.cte.cte_thread import cte_thread
 from vexsim.api.cte.signal_tower import SignalTower
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "Thread",
     "TimeUnits",
     "Timer",
+    "cte_thread",
     "timer_event",
     "wait",
 ]

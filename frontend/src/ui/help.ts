@@ -30,6 +30,7 @@ const API: [string, [string, string][]][] = [
     ["tower.pressing()", "Is the bumper held?"],
   ]],
   ["Brain & control", [
+    ["cte_thread(main)", "Start the project: put your code in def main(): and end the file with this"],
     ["print(value)", "Print Console"],
     ["wait(time, MSEC | SECONDS)", "Pause (simulated time)"],
     ["brain.timer_time(MSEC) / brain.timer_reset()", "Project timer"],

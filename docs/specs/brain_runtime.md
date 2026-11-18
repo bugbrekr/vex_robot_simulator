@@ -33,6 +33,12 @@ For V5/EXP compatibility the sim also provides `brain.timer.time(units)`, `brain
 - `wait(time, units=MSEC)`, where units is `MSEC` or `SECONDS`. Time is **sim time**.
 - `brain.program_stop()` ends the project.
 
+## Project entry point: `cte_thread(main)`
+VEXcode CTE projects put their code in `def main():` and end the file with `cte_thread(main)`.
+On the real arm the project only runs when it's started this way (the user confirmed this on hardware).
+- `cte_thread(fn, args=())` starts `fn` as the project's main thread and returns immediately.
+- **Simulator:** a program that never calls `cte_thread` still runs top to bottom, but the console shows a warning when the run starts. The check is static: it looks for any `cte_thread(...)` call in the source.
+
 ## Threads
 - `Thread(fn)` starts a thread running `fn`.
 - `thread.stop()` stops it. A stopped thread cannot be restarted.

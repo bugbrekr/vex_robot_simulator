@@ -133,3 +133,20 @@ def test_busy_poll_loop_advances_time(run):
 def test_deterministic_timing(run):
     code = HEADER + "arm.move_to(200, 100, 40)\narm.move_inc(0, -150, 30)\nprint(brain.timer_time())"
     assert len({run(code)["console"] for _ in range(3)}) == 1
+
+
+def test_cte_thread_runs_main_without_warning(run):
+    s = run(HEADER + "def main():\n    arm.move_inc(20, 0, 0)\n    print('x', arm.get_x())\n\ncte_thread(main)\n")
+    assert s["console"].startswith("x 140")
+    assert not any("cte_thread" in w for w in s["warnings"])
+
+
+def test_cte_thread_passes_args(run):
+    s = run(HEADER + "def main(a, b):\n    print('sum', a + b)\n\ncte_thread(main, (2, 3))\n")
+    assert "sum 5" in s["console"]
+
+
+def test_missing_cte_thread_warns_but_still_runs(run):
+    s = run(HEADER + "arm.move_inc(20, 0, 0)\nprint('x', arm.get_x())\n")
+    assert s["console"].startswith("x 140")
+    assert any("cte_thread(main)" in w for w in s["warnings"])

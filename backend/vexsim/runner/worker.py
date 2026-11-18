@@ -12,6 +12,7 @@ in-process for headless runs/tests via ``Worker(...).run_headless()``.
 from __future__ import annotations
 
 import argparse
+import ast
 import importlib
 import json
 import os
@@ -54,6 +55,28 @@ def build_platform(platform: str, engine: SimEngine, scenario: dict) -> tuple[di
         }
         return devices, scene
     raise ValueError(f"unsupported platform {platform!r}")
+
+
+CTE_THREAD_WARNING = (
+    "This project never calls cte_thread(main). The simulator runs it anyway, but on a real "
+    "CTE arm the project only runs when its code is started with cte_thread(main) - put your "
+    "code in def main(): and end the file with cte_thread(main)."
+)
+
+
+def uses_cte_thread(code: str) -> bool:
+    """True if the program calls ``cte_thread(...)`` anywhere (VEXcode CTE's entry point)."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            f = node.func
+            if (isinstance(f, ast.Name) and f.id == "cte_thread") or (
+                    isinstance(f, ast.Attribute) and f.attr == "cte_thread"):
+                return True
+    return False
 
 
 class Worker:
@@ -154,6 +177,7 @@ class Worker:
             self.rt.errors[-1]["line"] = exc.lineno
             self._set_state("finished")
             return
+        missing_entry = self.platform == "cte" and not uses_cte_thread(code)
         with self.engine.lock:
             self.engine.clear_timers()
             for dev in self.devices.values():
@@ -166,6 +190,8 @@ class Worker:
                 homing = False
         self.phase = "homing" if homing else ""
         self._set_state("running")
+        if missing_entry:
+            self._warn(CTE_THREAD_WARNING)
         if not homing:
             self._launch()
 
