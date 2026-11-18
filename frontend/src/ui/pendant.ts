@@ -86,7 +86,7 @@ export class TeachPendant {
           <label>End Effector</label>
           <select data-el="tool"><option value="magnet">Magnet</option><option value="pen">Pen</option></select>
           <label>Pen Offset</label>
-          <div class="tp-offset"><input type="number" min="0" max="80" step="1" value="23" data-el="penoff"><span>mm</span></div>
+          <div class="tp-offset"><input type="number" min="0" max="80" step="1" value="0" data-el="penoff"><span>mm</span></div>
         </div>
       </section>`;
     root.querySelectorAll<HTMLElement>("[data-el]").forEach((e) => (this.els[e.dataset.el!] = e));

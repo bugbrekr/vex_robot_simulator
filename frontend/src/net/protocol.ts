@@ -15,6 +15,8 @@ export interface ArmSnapshot {
   mounted_tool: "magnet" | "pen"; // physically attached end effector
   pen_offset: number;
   marker_protrusion: number;
+  /** pen offset that matches the mounted marker (0 for the kit default) */
+  marker_offset: number;
   at_safe: boolean;
   sagging: boolean;
   magnet: boolean;

@@ -26,8 +26,13 @@ tools:
     # VEX: "pen offset = distance from the top of the Pen Holder Tool (where it connects to the
     # arm) to the marker tip; 0 puts the z-origin at the connection point".  The marker is held
     # in a C-clamp that sits to the side of the tool axis (traced from the STEM Labs Unit 4 render).
+    # VEX also says set_end_effector_type "automatically adjusts the z-offset to match the
+    # selected tool", and on real arms Arm.PEN with pen offset 0 draws at z=0 with the kit
+    # marker (user-confirmed; STEM Labs drawing lessons use z=0 too). So the PEN type carries a
+    # built-in length to the default marker tip, and set_pen_offset() adds to it.
+    holder_length: 23.0          # ESTIMATE  flange -> kit marker tip (PEN type z-offset, pen offset 0)
     lateral_offset: 22.0         # ESTIMATE  marker axis <- tool axis, towards ee +x ("forward")
-    marker_protrusion: 23.0      # REAL (VEX: ~23 mm for the kit marker) physical tip below mount
+    marker_protrusion: 23.0      # REAL (VEX: ~23 mm for the kit marker) physical tip below the flange
     marker_length: 120.0         # ESTIMATE  visual: body length of the dry-erase marker
     marker_diameter: 18.0        # ESTIMATE
 
@@ -35,7 +40,7 @@ tools:
 joints:
   - {name: J1, desc: base yaw,      min: -170, max: 170, max_speed: 90}
   - {name: J2, desc: shoulder,      min: -90,  max: 90,  max_speed: 75}
-  - {name: J3, desc: elbow,         min: -90,  max: 70,  max_speed: 90}
+  - {name: J3, desc: elbow,         min: -90,  max: 78,  max_speed: 90}
   - {name: J4, desc: wrist roll,    min: -150, max: 150, max_speed: 150}
   - {name: J5, desc: wrist pitch,   min: -120, max: 120, max_speed: 150}
   - {name: J6, desc: tool roll,     min: -180, max: 180, max_speed: 180}
@@ -50,7 +55,8 @@ motion:
 # Collision / workspace rules
 workspace:
   floor_z: 0.0                   # tile surface
-  floor_margin: 0.0              # TCP may touch the tile (pen drawing / pick from tile)
+  floor_margin: -10.0            # targets may go a little below the tile: the real arm accepts them and
+                                 # just presses the tool down (drawing code often uses z = -1..-4)
   link_floor_margin: 5.0         # elbow / wrist centre must stay this far above the tile
   keepout:                       # DERIVED cylinders around the base the TCP / wrist may not enter
     - {radius: 73.0, height: 59.0}

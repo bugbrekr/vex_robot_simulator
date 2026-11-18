@@ -44,6 +44,7 @@ class ArmGeometry:
     magnet_length: float
     pen_lateral: float
     marker_protrusion: float
+    pen_holder_length: float
     joint_min: np.ndarray  # radians
     joint_max: np.ndarray
     joint_max_speed: np.ndarray  # rad/s at 100 %
@@ -72,9 +73,10 @@ class ArmGeometry:
         """Tool tip relative to the J5 wrist centre, in the tool frame (tool axis = +x).
 
         Magnet: contact face of the electromagnet. Pen: marker tip (lateral offset from the
-        clamp + pen offset along the tool axis). Tool-frame +z maps to end-effector +x."""
+        clamp; the PEN type's built-in holder length + pen offset along the tool axis). Tool-frame +z maps to end-effector +x."""
         if tool == PEN:
-            return np.array([self.wrist_to_flange + pen_offset, 0.0, self.pen_lateral])
+            return np.array([self.wrist_to_flange + self.pen_holder_length + pen_offset, 0.0,
+                             self.pen_lateral])
         return np.array([self.wrist_to_flange + self.magnet_length, 0.0, 0.0])
 
     @classmethod
@@ -91,6 +93,7 @@ class ArmGeometry:
             magnet_length=d["tools"]["magnet"]["length"],
             pen_lateral=d["tools"]["pen"]["lateral_offset"],
             marker_protrusion=d["tools"]["pen"]["marker_protrusion"],
+            pen_holder_length=d["tools"]["pen"].get("holder_length", 0.0),
             joint_min=np.radians([j["min"] for j in joints]),
             joint_max=np.radians([j["max"] for j in joints]),
             joint_max_speed=np.radians([j["max_speed"] for j in joints]),

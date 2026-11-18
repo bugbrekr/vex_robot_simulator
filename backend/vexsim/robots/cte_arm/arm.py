@@ -37,6 +37,9 @@ from vexsim.robots.cte_arm.trajectory import Planner, Trajectory
 CRASH_PENETRATION = 3.0  # mm a held cube / the tool may sink into an obstacle before "crash"
 CONTACT_TOL = 0.3  # mm of overlap tolerated for manual / gravity contact
 FLOOR_CRASH = 2.0  # mm the physical tool tip may press into the tile before "crash"
+# The marker's felt tip and the holder give a little, so code can press the pen down (z = -1..-4
+# is common in real drawing programs) without the arm stalling.
+PEN_PRESS = 6.0  # mm
 SAFE_POS_TOL = 2.0  # mm
 SAFE_ANG_TOL = 3.0  # deg
 
@@ -56,9 +59,9 @@ GEAR_DAMPING = np.array([2.2e6, 2.6e6, 9.0e5])
 GEAR_FRICTION = np.array([4.0e4, 6.0e4, 1.5e4])
 SAG_MAX_RATE = math.radians(20)  # rad/s cap
 # Back-driven by hand / gravity the joints can go a little past the software limits, up to
-# their mechanical stops (deg, ESTIMATE). The elbow stop sits at 80 deg of fold - just before
+# their mechanical stops (deg, ESTIMATE). The elbow stop sits at 82 deg of fold - just before
 # the forearm would touch the shoulder housing (contact at ~85 deg with the modelled geometry).
-MECH_LIMIT_MARGIN = np.radians([0, 0, 10, 0, 10, 0])
+MECH_LIMIT_MARGIN = np.radians([0, 0, 4, 0, 10, 0])
 SAG_RELEASE_TIME = 0.6  # s for the holding torque to bleed off as the drives power down
 DRAG_JOINTS = (0, 1, 2, 4)
 DRAG_STEP = 3.0  # mm per sub-step when dragging (prevents tunnelling through cubes)
@@ -113,8 +116,13 @@ class ArmModel(Entity):
     def physical_fk(self, q=None):
         """FK of the *mounted* tool's real tip (magnet face / marker tip)."""
         q = self.q if q is None else q
-        off = self.marker_protrusion if self.mounted_tool == PEN else 0.0
+        off = self.marker_offset if self.mounted_tool == PEN else 0.0
         return self.kin.fk(q, self.mounted_tool, off)
+
+    @property
+    def marker_offset(self) -> float:
+        """The pen offset that puts the configured TCP on the mounted marker's real tip."""
+        return self.marker_protrusion - self.g.pen_holder_length
 
     def tcp(self) -> np.ndarray:
         return self.fk.tcp
@@ -417,7 +425,7 @@ class ArmModel(Entity):
         """The tool is grabbed while tilted (e.g. after slumping): swing it upright to p in one
         motion, but only if the joint-space path there touches nothing."""
         tool = self.mounted_tool
-        off = self.marker_protrusion if tool == PEN else 0.0
+        off = self.marker_offset if tool == PEN else 0.0
         f = self.physical_fk()
         yaw = math.degrees(math.atan2(f.r_ee[1, 0], f.r_ee[0, 0]))
         q_t = self.kin.ik(p, rpy_deg_to_matrix(yaw, 0.0, 0.0), near=self.q, tool=tool, pen_offset=off)
@@ -477,7 +485,7 @@ class ArmModel(Entity):
 
     def _drag_upright(self, p: np.ndarray) -> bool:
         tool = self.mounted_tool
-        off = self.marker_protrusion if tool == PEN else 0.0
+        off = self.marker_offset if tool == PEN else 0.0
         f = self.physical_fk()
         yaw = math.degrees(math.atan2(f.r_ee[1, 0], f.r_ee[0, 0]))
         r = rpy_deg_to_matrix(yaw, 0.0, 0.0)
@@ -531,7 +539,8 @@ class ArmModel(Entity):
         """Crash during a programmed move: the real tool tip in the tile, or the tool / wrist /
         forearm / carried cube pushing into a cube."""
         held = self.magnet.held
-        if f.tcp[2] < self.world.floor_z - FLOOR_CRASH:
+        press = PEN_PRESS if self.mounted_tool == PEN else FLOOR_CRASH
+        if f.tcp[2] < self.world.floor_z - press:
             return True
         if held is not None and held.bottom_z < self.world.floor_z - CRASH_PENETRATION:
             return True
@@ -583,6 +592,7 @@ class ArmModel(Entity):
             "mounted_tool": self.mounted_tool,
             "pen_offset": self.pen_offset,
             "marker_protrusion": self.marker_protrusion,
+            "marker_offset": round(self.marker_offset, 2) + 0.0,
             "magnet": self.magnet.on,
             "holding": self.magnet.held.id if self.magnet.held else None,
             "moving": self.is_moving(),

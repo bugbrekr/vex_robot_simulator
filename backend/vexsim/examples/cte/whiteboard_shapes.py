@@ -15,7 +15,6 @@ def line(x1, y1, x2, y2):
 
 def main():
     arm.set_end_effector_type(Arm.PEN)
-    arm.set_pen_offset(23)
 
     # Triangle (STEM Labs Unit 4 style)
     line(150, 50, 50, 150)

@@ -52,7 +52,7 @@ def test_common_targets_reachable(p):
     assert KIN.ik(p, rpy_deg_to_matrix(0, 0, 0)) is not None
 
 
-@pytest.mark.parametrize("p", [(0, 0, 50), (400, 0, 50), (150, 0, -5)])
+@pytest.mark.parametrize("p", [(0, 0, 50), (400, 0, 50), (150, 0, -15)])
 def test_unreachable_targets(p):
     assert KIN.ik(p, rpy_deg_to_matrix(0, 0, 0)) is None
 
@@ -70,7 +70,7 @@ def test_pen_tool_tip_geometry():
     magnet_tip = KIN.fk(q).tcp
     pen_tip = KIN.fk(q, PEN, 23).tcp
     g = KIN.g
-    assert np.isclose(pen_tip[2] - magnet_tip[2], g.magnet_length - 23, atol=1e-6)
+    assert np.isclose(pen_tip[2] - magnet_tip[2], g.magnet_length - g.pen_holder_length - 23, atol=1e-6)
     assert np.isclose(pen_tip[0] - magnet_tip[0], g.pen_lateral, atol=1e-6)
     # IK puts the configured tip exactly on target
     qp = KIN.ik((150, 0, 0), r, tool=PEN, pen_offset=23)

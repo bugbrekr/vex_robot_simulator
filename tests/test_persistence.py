@@ -90,7 +90,7 @@ def test_end_effector_swap_requires_safe_position(w):
     assert w.arm.mounted_tool == "magnet"
     w._handle({"type": "safe"})
     steps(w, 5)
-    w._handle({"type": "tool", "tool": "pen", "pen_offset": 23})
+    w._handle({"type": "tool", "tool": "pen", "pen_offset": 0})
     steps(w, 5)
     assert w.arm.mounted_tool == "pen" and w.arm.tool == "pen"
     assert np.allclose(w.arm.tcp(), [120, 0, 100], atol=1)  # re-homed with the pen TCP
@@ -109,7 +109,7 @@ def test_manual_mode_slumps_slowly_and_settles(w):
     f = w.arm.physical_fk()
     assert w.arm.q[1] < q0[1] - np.radians(30)  # J2 leaned back
     assert f.elbow[2] < f0.elbow[2] - 60  # the upper links came down
-    assert np.degrees(w.arm.q[2]) <= 80.01  # elbow stopped short of the shoulder housing
+    assert np.degrees(w.arm.q[2]) <= 82.01  # elbow stopped short of the shoulder housing
     assert f.tcp[2] > 5  # tool hangs in the air
     q = w.arm.q.copy()
     steps(w, 1)
@@ -117,7 +117,7 @@ def test_manual_mode_slumps_slowly_and_settles(w):
 
 
 def test_program_resets_project_defaults_and_warns_tool_mismatch(w):
-    w._handle({"type": "tool", "tool": "pen", "pen_offset": 23})
+    w._handle({"type": "tool", "tool": "pen", "pen_offset": 0})
     steps(w, 5)
     run_program(w, H + "arm.move_inc(0, 0, 10)\n")
     assert w.arm.tool == "magnet"  # VEX default at project start
@@ -183,7 +183,7 @@ def test_cube_falls_with_gravity(w):
 
 
 def test_manual_drag_upright_keeps_tool_vertical(w):
-    w._handle({"type": "tool", "tool": "pen", "pen_offset": 23})
+    w._handle({"type": "tool", "tool": "pen", "pen_offset": 0})
     steps(w, 5)
     w._handle({"type": "manual", "enabled": True})
     steps(w, 4)  # it slumps

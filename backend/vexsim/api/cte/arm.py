@@ -66,11 +66,12 @@ class Arm:
                     f"{'Arm.PEN' if m.tool == _PEN else 'Arm.MAGNET'} - did you forget "
                     f"arm.set_end_effector_type({want})?")
         elif (m.tool == _PEN and m.mounted_tool == _PEN and "offset" not in notes
-              and abs(m.pen_offset - m.marker_protrusion) > 3):
+              and abs(m.pen_offset - m.marker_offset) > 3):
             notes.add("offset")
-            rt.warn(f"Pen offset is {m.pen_offset:g} mm but the marker tip sits "
-                    f"{m.marker_protrusion:g} mm below the holder - try "
-                    f"arm.set_pen_offset({m.marker_protrusion:g})")
+            want = round(m.marker_offset, 1)
+            rt.warn(f"Pen offset is {m.pen_offset:g} mm but the mounted marker needs "
+                    f"{want:g} mm (its tip is {m.marker_protrusion:g} mm below the holder mount) - "
+                    f"try arm.set_pen_offset({want:g})")
 
     def _base_pose(self):
         with self._rt.engine.lock:

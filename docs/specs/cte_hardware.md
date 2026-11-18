@@ -44,7 +44,8 @@ Sources:
 | Forearm offset above the elbow axis | 28.0 mm | MEASURED |
 | Wrist (J5) → tool flange | 13.0 mm | MEASURED |
 | Magnet tool, flange → TCP | 38.5 mm | MEASURED |
-| Pen tip along the tool axis = **pen offset**, measured from where the holder connects | default 0; about 23 mm for the kit marker | REAL (VEX API / KB) |
+| Pen marker tip below the holder mount (kit marker, default position) | about 23 mm | REAL (VEX API / KB) |
+| `Arm.PEN` built-in z-offset (flange → kit marker tip at pen offset 0) | 23 mm | ESTIMATE. The docs say offset 0 is the holder mount, but real arms draw at z=0 with offset 0 (user-confirmed on hardware, and STEM Labs drawing uses z=0). So the sim treats the type's automatic z-offset as reaching the kit marker tip, and `set_pen_offset` adds to it |
 | Pen marker axis, sideways from the tool axis (toward ee +x) | 22 mm | ESTIMATE (traced from the STEM Labs Unit 4 render) |
 | Marker body | Ø18 × 120 mm, black cap, chisel tip | ESTIMATE |
 | Base flange | Ø138 mm, 13 mm tall | MEASURED |
@@ -59,7 +60,7 @@ Zero pose: the upper arm points straight up, and the forearm and tool point forw
 |---|---|---|---|---|
 | J1 | Base yaw (about z) | −170 … 170 | 90 | ESTIMATE |
 | J2 | Shoulder pitch | −90 … 90 | 75 | ESTIMATE |
-| J3 | Elbow pitch | −90 … 70 | 90 | ESTIMATE |
+| J3 | Elbow pitch | −90 … 78 (mechanical stop 82) | 90 | ESTIMATE (raised from 70: the pen needs 72 at the safe position) |
 | J4 | Wrist roll (about the forearm) | −150 … 150 | 150 | ESTIMATE |
 | J5 | Wrist pitch | −120 … 120 | 150 | ESTIMATE |
 | J6 | Tool roll | −180 … 180 | 180 | ESTIMATE |
@@ -91,7 +92,8 @@ Zero pose: the upper arm points straight up, and the forearm and tool point forw
 - Linear and Serpentine conveyors, Disk Feeder and Loader, Diverter.
 
 ## End-effector geometry used for IK
-- **TCP = tip of the tool.** For the magnet that is the contact face, at flange + 38.5 mm. For the pen it is the marker tip, at flange + pen offset along the tool axis, plus 22 mm sideways.
+- **TCP = tip of the tool.** For the magnet that is the contact face, at flange + 38.5 mm. For the pen it is the marker tip, at flange + 23 mm (the `Arm.PEN` built-in offset) + pen offset along the tool axis, plus 22 mm sideways.
+- **Below the tile:** move targets down to z = −10 mm are accepted, as on the real arm, which just presses the tool down. Drawing code often uses z = −1…−4. The marker may press up to 6 mm into the board without counting as a crash. The magnet may press 2 mm.
 - **Two separate tools in the sim:**
   - The **mounted** tool is physical. It changes only at the safe position.
   - The **configured** tool is what software sets with `set_end_effector_type` / `set_pen_offset`, which reset to MAGNET / 0 at each project start.

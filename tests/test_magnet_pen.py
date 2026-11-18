@@ -47,7 +47,7 @@ def test_pen_only_marks_the_whiteboard(run):
     s = run(code, scenario="cte_tile", tool="pen")  # bare tile: no ink
     assert s["worker"].devices["arm"].pen.strokes == []
     # on the whiteboard map, a path through the Signal Tower notch leaves a gap
-    s = run(HEADER + "arm.set_end_effector_type(Arm.PEN)\narm.set_pen_offset(23)\n"
+    s = run(HEADER + "arm.set_end_effector_type(Arm.PEN)\n"
                      "arm.move_to(-40, 140, 10)\narm.move_to(-40, 140, 0)\narm.move_to(-40, 200, 0)\n"
                      "arm.move_to(-5, 200, 0)\n",
             scenario="whiteboard", tool="pen")

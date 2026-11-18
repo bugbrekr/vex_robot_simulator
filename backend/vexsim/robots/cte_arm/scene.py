@@ -48,7 +48,7 @@ def build_scene(engine: SimEngine, scenario: dict) -> dict:
         if arm_cfg.get("mounted_tool") == "pen":
             # pen mounted and configured (pendant jogging uses the marker tip); re-home the TCP
             arm.mounted_tool = arm.tool = "pen"
-            arm.pen_offset = arm.marker_protrusion
+            arm.pen_offset = arm.marker_offset
             from vexsim.robots.cte_arm.kinematics import rpy_deg_to_matrix
 
             q = arm.kin.ik(np.array(arm.g.start_position), rpy_deg_to_matrix(*arm.g.start_orientation),

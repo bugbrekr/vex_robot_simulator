@@ -45,7 +45,7 @@ Behaviour notes:
 | `set_speed(speed)` | 50 | Percent, 1–100 |
 | `set_end_effector_type(type)` | `Arm.MAGNET` | `Arm.MAGNET` or `Arm.PEN`. Changing it adjusts the z-offset automatically |
 | `set_end_effector_magnet(state)` | False | True turns the magnet on (picks up objects). False releases the held object |
-| `set_pen_offset(zOffset)` | 0 | mm, from the top of the pen tool to the marker tip. Only applies with `PEN` |
+| `set_pen_offset(zOffset)` | 0 | mm, from the top of the pen tool to the marker tip. Only applies with `PEN`. Sim: added to the `PEN` type's built-in offset, so 0 puts z=0 at the kit marker's tip, which matches real arms (see cte_hardware.md) |
 | `set_control_stop(state=True)` | – | Stops motion immediately. **Latches**: no further moves until the program restarts |
 | `set_timeout(timeout, units=MSEC)` | – | `MSEC`, `SECONDS` or `SEC` |
 

@@ -48,7 +48,7 @@ export class SimPanel {
           <label>Marker tip</label>
           <div class="tp-speed"><input type="range" min="5" max="45" step="0.5" data-el="protrusion"><span data-el="protrusion-v"></span></div>
         </div>
-        <p class="hint" data-el="hw-hint">Swap tools at the safe position. The marker tip is the real distance from the holder to the tip; projects must match it with <code>arm.set_pen_offset()</code>.</p>
+        <p class="hint" data-el="hw-hint">Swap tools at the safe position. The marker tip is the real distance from the holder mount to the tip. At the kit default (23 mm) <code>Arm.PEN</code> needs no pen offset; otherwise match the difference with <code>arm.set_pen_offset()</code>.</p>
       </section>
 
       <section class="card tp-section sim-sec"><h4>Appearance</h4>
@@ -80,7 +80,7 @@ export class SimPanel {
     this.els["clear-trail"].onclick = () => this.onClearTrail();
     this.els.reset.onclick = () => { if (confirm("Reset the simulation? The arm, objects and drawings go back to the map's start.")) this.onResetSim(); };
     this.els.mount.querySelectorAll<HTMLButtonElement>("button").forEach((b) => {
-      b.onclick = () => this.send({ type: "tool", tool: b.dataset.tool as "magnet" | "pen", ...(b.dataset.tool === "pen" && this.arm ? { pen_offset: this.arm.marker_protrusion } : {}) });
+      b.onclick = () => this.send({ type: "tool", tool: b.dataset.tool as "magnet" | "pen", ...(b.dataset.tool === "pen" && this.arm ? { pen_offset: this.arm.marker_offset } : {}) });
     });
     const prot = this.els.protrusion as HTMLInputElement;
     prot.oninput = () => (this.els["protrusion-v"].textContent = `${prot.value} mm`);
