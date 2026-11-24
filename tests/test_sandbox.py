@@ -20,6 +20,12 @@ FAKE = textwrap.dedent('''\
     a = sys.argv[1:]
     with open(os.path.join(d, "calls.jsonl"), "a") as f:
         f.write(json.dumps(a) + "\\n")
+    if a[0] == "run" and os.environ.get("FAKE_DOCKER_FAIL"):
+        for _ in range(2):
+            print('level=error msg="running `/usr/bin/newuidmap 9737 0 1006 1 1 493216 65536`: '
+                  'newuidmap: write to uid_map failed: Operation not permitted"', file=sys.stderr)
+            print('Error: cannot set up namespace using "/usr/bin/newuidmap": exit status 1', file=sys.stderr)
+        sys.exit(125)
     if a[0] == "run":
         valued = {{"--name", "--label", "--network", "--tmpfs", "--cap-drop", "--security-opt", "--user",
                   "--ipc", "--log-driver", "--memory", "--memory-swap", "--cpus", "--pids-limit"}}
@@ -32,7 +38,7 @@ FAKE = textwrap.dedent('''\
         if cmd[0] == "python":
             cmd[0] = sys.executable
         open(os.path.join(d, name + ".pid"), "w").write(str(os.getpid()))
-        os.execv(cmd[0], cmd)
+        os.execvp(cmd[0], cmd)
     if a[0] == "rm":
         for n in a[2:]:
             p = os.path.join(d, n + ".pid")
@@ -115,3 +121,35 @@ def test_session_runs_program_in_container_and_removes_it(fake_docker, monkeypat
     assert not os.path.exists(d / f"{names[0]}.pid")  # process gone
     runs = [a for a in calls(d) if a[0] == "run"]
     assert len(runs) == 2 and "whiteboard" in runs[1]
+
+
+def test_namespace_failure_shows_one_plain_message(fake_docker, monkeypatch):
+    """Rootless Podman under NoNewPrivileges: raw engine errors stay in the server log."""
+    d, cfg = fake_docker
+    import vexsim.server.app as appmod
+
+    monkeypatch.setattr(appmod, "SANDBOX", cfg)
+    monkeypatch.setenv("FAKE_DOCKER_FAIL", "1")
+    c = TestClient(appmod.app)
+    warnings = []
+    with c.websocket_connect("/vex_cte/ws/cte") as ws:
+        ws.send_text(json.dumps({"type": "run", "scenario": "cte_tile", "code": "print(1)\n"}))
+        deadline = time.time() + 5
+        while time.time() < deadline and not warnings:
+            msg = json.loads(ws.receive_text())
+            if msg["type"] == "warning":
+                warnings.append(msg["text"])
+        time.sleep(0.3)
+    assert len(warnings) == 1 and "couldn't start its sandbox" in warnings[0]
+    assert "newuidmap" not in warnings[0]
+
+
+def test_self_check_reports_namespace_problem(fake_docker, monkeypatch):
+    import asyncio
+
+    _, cfg = fake_docker
+    monkeypatch.setenv("FAKE_DOCKER_FAIL", "1")
+    ok, msg = asyncio.run(cfg.self_check())
+    assert not ok and "NoNewPrivileges" in msg
+    monkeypatch.delenv("FAKE_DOCKER_FAIL")
+    assert asyncio.run(cfg.self_check()) == (True, "sandbox OK")

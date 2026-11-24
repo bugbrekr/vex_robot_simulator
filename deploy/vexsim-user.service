@@ -25,7 +25,9 @@ Environment=DOCKER_HOST=unix://%t/docker.sock
 ExecStart=%h/VEX_Simulator/.venv/bin/vexsim serve --host 127.0.0.1 --port 8000 --base-path /vex_cte
 Restart=on-failure
 RestartSec=2
-NoNewPrivileges=yes
+# Do NOT set NoNewPrivileges=yes here: rootless Podman/Docker start containers through the
+# setuid helpers newuidmap/newgidmap, which it blocks ("newuidmap: write to uid_map failed:
+# Operation not permitted"). Every worker container still gets --security-opt no-new-privileges.
 
 [Install]
 WantedBy=default.target

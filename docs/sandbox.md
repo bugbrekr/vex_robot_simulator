@@ -117,6 +117,14 @@ nginx (`deploy/nginx-vexsim.conf`) still proxies to `127.0.0.1:8000`.
 
 **Troubleshooting**
 - **`--memory`, `--cpus` or `--pids-limit` errors in rootless mode** (e.g. "cgroup … not supported"): controller delegation is missing (step 3), or the host is on cgroup v1. Fix the delegation, or run without limits by setting `VEXSIM_SANDBOX_MEMORY=`, `VEXSIM_SANDBOX_CPUS=` and `VEXSIM_SANDBOX_PIDS=` (empty values). The limits are the protection against runaway programs, so delegation is worth fixing.
+- **`newuidmap: write to uid_map failed: Operation not permitted`** (or `cannot set up namespace using "/usr/bin/newuidmap"`): rootless Podman can't create the container's user namespace.
+  - **Usual cause:** `NoNewPrivileges=yes` in the systemd unit. It blocks the setuid `newuidmap`/`newgidmap` helpers. Remove the line, then run `systemctl --user daemon-reload && systemctl --user restart vexsim`. `systemctl --user show vexsim -p NoNewPrivileges` should then print `no`. The containers themselves keep `no-new-privileges`.
+  - **Why it can work at first:** Podman reuses a namespace created by an earlier interactive `podman` command until a reboot or `podman system migrate`.
+  - **Rarer causes:**
+    - `newuidmap` has lost its setuid bit. `ls -l /usr/bin/newuidmap` should show `-rwsr-xr-x root`, or `getcap` should show `cap_setuid`.
+    - `vexsim` is missing from `/etc/subuid` or `/etc/subgid`.
+    - `/usr` is mounted `nosuid`.
+  - **Where it shows up:** the server checks the sandbox at startup and logs `vexsim: sandbox OK` or `SANDBOX CHECK FAILED - …` (see `journalctl --user -u vexsim`). Students only see a short "couldn't start its sandbox" message.
 - **`Cannot connect to the Docker daemon`:** `DOCKER_HOST` isn't set to the rootless socket. The user unit sets it for you.
 - **Every session's first start takes about a second:** that's the cost of a fresh container. The scene then persists across runs inside that container.
 

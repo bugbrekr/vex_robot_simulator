@@ -29,6 +29,25 @@ import uuid
 from dataclasses import dataclass, field
 
 LABEL = "vexsim.worker=1"
+
+# Container-engine errors that mean the sandbox itself can't start (not a problem in user code).
+_SETUP_ERRORS = {
+    "rootless namespace (newuidmap/newgidmap) - remove NoNewPrivileges=yes from the systemd unit":
+        ("newuidmap", "newgidmap", "cannot set up namespace"),
+    "worker image not found - run `vexsim sandbox build` as the service user":
+        ("image not known", "unable to find image", "no such image", "pull access denied"),
+    "container engine not reachable":
+        ("cannot connect to the docker daemon", "command not found"),
+}
+
+
+def setup_problem(text: str) -> str | None:
+    """If a line of container-engine output means the sandbox can't start, say why."""
+    low = text.lower()
+    for why, needles in _SETUP_ERRORS.items():
+        if any(n in low for n in needles):
+            return why
+    return None
 WORKER_MODULE = ["-u", "-m", "vexsim.runner.worker"]
 
 
@@ -95,7 +114,8 @@ class SandboxConfig:
     async def _docker(self, *args: str, timeout: float = 15.0) -> tuple[int, str]:
         try:
             proc = await asyncio.create_subprocess_exec(
-                self.docker, *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+                self.docker, *args, stdin=asyncio.subprocess.DEVNULL,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
         except FileNotFoundError:
             return 127, f"{self.docker}: command not found"
         try:
@@ -105,6 +125,17 @@ class SandboxConfig:
                 proc.kill()
             return 124, "timeout"
         return proc.returncode or 0, out.decode(errors="replace")
+
+    async def self_check(self) -> tuple[bool, str]:
+        """Start one throw-away locked-down container running `true` (same flags as a session)."""
+        name = f"vexsim-check-{uuid.uuid4().hex[:8]}"
+        args = [a for a in self.docker_run_args(name)[1:] if a != "-i"] + ["true"]
+        code, out = await self._docker(*args, timeout=60.0)
+        if code == 0:
+            return True, "sandbox OK"
+        out = out.strip()
+        why = setup_problem(out)
+        return False, (f"{why}. " if why else "") + f"`{self.docker} run` failed ({code}): {out[-400:]}"
 
     async def stop(self, name: str | None) -> None:
         """Force-remove a worker container (killing the `docker run` client alone may not)."""

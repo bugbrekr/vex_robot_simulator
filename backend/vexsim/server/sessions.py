@@ -7,9 +7,10 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import sys
 from collections.abc import Awaitable, Callable
 
-from vexsim.server.sandbox import SandboxConfig
+from vexsim.server.sandbox import SandboxConfig, setup_problem
 
 # Everything except "reset" (new scene = new worker process) goes to the persistent worker.
 LOCAL = {"reset"}
@@ -58,11 +59,26 @@ class Session:
 
     async def _pump_stderr(self, proc) -> None:
         assert proc.stderr is not None
+        told = False
         while line := await proc.stderr.readline():
             text = line.decode().rstrip()
-            if text:
+            if not text:
+                continue
+            why = setup_problem(text) if self.container else None
+            if why:
+                # the sandbox itself failed to start: details go to the server log, the student
+                # sees one plain message
+                print(f"vexsim: sandbox failed to start ({why}): {text}", file=sys.stderr, flush=True)
+                if told:
+                    continue
+                told = True
+                text = ("The simulator couldn't start its sandbox on the server. Ask whoever runs "
+                        "this server to check its log (docs/sandbox.md, Troubleshooting).")
                 with contextlib.suppress(Exception):
-                    await self.send(json.dumps({"type": "warning", "text": f"[worker] {text}"}))
+                    await self.send(json.dumps({"type": "warning", "text": text}))
+                continue
+            with contextlib.suppress(Exception):
+                await self.send(json.dumps({"type": "warning", "text": f"[worker] {text}"}))
 
     async def command(self, msg: dict) -> None:
         kind = msg.get("type")
