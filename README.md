@@ -54,7 +54,7 @@ The frontend uses only relative URLs, so nginx can put any prefix in front, for 
 | **Code** | VS Code-style editor with the VEX extension: New Project wizard (IQ 2nd gen, Python, templates), Explorer, a VEX view with Device Info, slots and Lab Programs, Slot Selector, Download, Play and Stop, plus Log, Interactive and Problems panels. Projects and slots are stored in the browser |
 | **Simulator** | Maps (blank, plus the Exp 7–10 courses, all walled), a clickable brain (Programs, Devices and Settings menus; Check, X, Left and Right buttons; 160×108 colour screen), and a live device monitor. Drag the robot to move it; click the Touch LED or bumper to press them. Sensors are realistic by default (seeded noise, drift, slip), with an ideal switch |
 
-The **Display** button in the app bar sets quality (Low, Medium or High: resolution, shadow detail, model detail), lighting (Studio, Classroom or Night) and shadows.
+The **Display** button in the app bar sets quality (Low, Medium or High: resolution, shadow detail, model detail), lighting (Studio, Classroom or Night) and shadows. At **High** quality the robot also shows its Smart cables: each plugged-in device is wired to its port on the brain, and the cables re-route when you change ports, the drive layout or the bumper mount.
 
 The IQ2 Python API covers Motor, MotorGroup, DriveTrain, SmartDrive, Distance, Optical, Bumper, Touchled, Inertial and Brain (screen, buttons, battery, timer). See [docs/specs/iq2_api.md](docs/specs/iq2_api.md). Hardware numbers are in [docs/specs/iq2_hardware.md](docs/specs/iq2_hardware.md), and the lab programs and maps in [docs/specs/iq2_labs.md](docs/specs/iq2_labs.md).
 

@@ -24,6 +24,10 @@ export class RobotModel {
   private freeParts: THREE.Object3D[] = [];
   private drive: "fwd" | "rwd" = "fwd";
   private bumperMount: "front" | "rear" = "front";
+  /** Smart cables (High quality only): rebuilt whenever ports, devices or layout change */
+  private cablesOn = false;
+  private cables = new THREE.Group();
+  private cableKey = "";
   private ledMat: THREE.MeshPhysicalMaterial;
   private plunger!: THREE.Mesh;
   private plungerX = 0;
@@ -32,6 +36,7 @@ export class RobotModel {
   private labels = new THREE.Group();
 
   constructor(readonly g: IQ2Geometry, screen: HTMLCanvasElement, quality: Quality = display.value.quality) {
+    this.cablesOn = quality === "high";
     const q = QUALITY[quality];
     const seg = q.segments;
     const p = g.pitch;
@@ -197,6 +202,7 @@ export class RobotModel {
     this.devices.touchled = tl;
 
     for (const d of ["distance", "optical", "bumper", "touchled"] as const) body.add(this.devices[d]);
+    body.add(this.cables);
     body.traverse((o) => {
       if ((o as THREE.Mesh).isMesh && !this.pick.touchled.includes(o) && !this.pick.bumper.includes(o)) this.pick.chassis.push(o);
     });
@@ -239,6 +245,66 @@ export class RobotModel {
         const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (mat && "opacity" in mat) { mat.transparent = !cfg[d].enabled; mat.opacity = cfg[d].enabled ? 1 : 0.35; }
       });
+    }
+    if (this.cablesOn) this.buildCables(cfg);
+  }
+
+  /** Brain socket for a Smart Port, in the chassis frame: ports 1-6 on the brain's front edge,
+   *  7-12 on its back edge, numbered left to right as seen from behind the robot. */
+  private socket(port: number): THREE.Vector3 {
+    const [bx, by, bz] = this.g.brain.center;
+    const [bsx, bsy] = this.g.brain.size;
+    const i = (port - 1) % 6;
+    const front = port <= 6;
+    return new THREE.Vector3(bx + (front ? 1 : -1) * (bsx / 2 + 1), by + bsy / 2 - 12 - i * 17.4, bz - 4);
+  }
+
+  /** Where a device's cable plugs in (chassis frame): the top of its housing, toward the brain. */
+  private plug(d: IQ2Device): THREE.Vector3 {
+    this.body.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    this.devices[d].traverse((o) => {
+      if ((o as THREE.Mesh).isMesh && !(o as THREE.Mesh).userData.noBounds) box.expandByObject(o);
+    });
+    const c = box.getCenter(new THREE.Vector3());
+    const p = this.body.worldToLocal(c.clone());
+    const top = this.body.worldToLocal(new THREE.Vector3(c.x, c.y, box.max.z)).z;
+    if (d === "optical") return new THREE.Vector3(p.x - 6, p.y, top);
+    return new THREE.Vector3(p.x, p.y, top + 1);
+  }
+
+  private buildCables(cfg: IQ2Config): void {
+    const key = JSON.stringify([cfg, this.drive, this.bumperMount]);
+    if (key === this.cableKey) return;
+    this.cableKey = key;
+    for (const c of this.cables.children) (c as THREE.Mesh).geometry?.dispose();
+    this.cables.clear();
+    const mat = std(0x18191b, 0.55);
+    const plugMat = std(0xd9dcdf, 0.5);
+    const railTop = this.g.rails[0][2] + this.g.rails[0][5] / 2;
+    for (const d of DEVICES) {
+      if (!cfg[d].enabled) continue;
+      const a = this.socket(cfg[d].port);
+      const b = this.plug(d);
+      const out = Math.sign(a.x - this.g.brain.center[0]) || 1;
+      // out of the socket, sag down onto the chassis, then up into the device
+      const pts = [
+        a.clone(),
+        a.clone().add(new THREE.Vector3(out * 12, 0, -2)),
+        new THREE.Vector3((a.x + out * 18 + b.x) / 2, (a.y + b.y) / 2, railTop + 6),
+        // leave the device low and sideways, toward the brain (no tall loop above sensors)
+        b.clone().lerp(new THREE.Vector3(a.x, a.y, b.z), Math.min(0.35, 14 / Math.max(1, a.distanceTo(b)))).add(new THREE.Vector3(0, 0, 5)),
+        b.clone(),
+      ];
+      const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal");
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 1.5, 8, false), mat);
+      tube.castShadow = true;
+      this.cables.add(tube);
+      for (const [pt, dir] of [[a, new THREE.Vector3(out, 0, 0)], [b, new THREE.Vector3(0, 0, 1)]] as const) {
+        const plug = new THREE.Mesh(new THREE.BoxGeometry(4.5, 5, 4.5), plugMat);
+        plug.position.copy(pt).addScaledVector(dir, 1.5);
+        this.cables.add(plug);
+      }
     }
   }
 
