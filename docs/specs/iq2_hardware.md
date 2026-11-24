@@ -1,5 +1,10 @@
 # Spec: VEX IQ (2nd gen) robot hardware (simulated BaseBot, front-wheel drive)
 
+![The simulated IQ robot on the Build tab](../images/iq2-build.png)
+
+*The simulated robot: FWD layout, every device plugged in, Smart cables shown at High quality.*
+
+
 Confidence tags:
 - **REAL**: from an official VEX source.
 - **LAB**: taken from the lab manual's VEXcode configuration.

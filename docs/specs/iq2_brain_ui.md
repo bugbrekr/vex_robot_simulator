@@ -1,5 +1,10 @@
 # Spec: IQ (2nd gen) brain user interface and the VS Code extension (as simulated)
 
+![Brain: Home](../images/iq2-brain-home.png) ![Brain: Programs](../images/iq2-brain-programs.png) ![Brain: Devices](../images/iq2-brain-devices.png)
+
+*The simulated brain: Home, Programs with two downloaded projects, and the live Devices view.*
+
+
 Sources:
 - [KB-DEV] https://kb.vex.com/hc/en-us/articles/4407061189908 ("Using the Devices Screen - IQ Brain (2nd gen)")
 - [KB-VSUI] https://kb.vex.com/hc/en-us/articles/8604273158164 (VS Code UI Overview for IQ)
@@ -49,7 +54,10 @@ Sources: the KB "Guide to the VEX IQ Brain Screen (2nd gen)" (13595260156820), "
 - **Keyboard:** Enter = Check, Backspace = X, ← and → = Left and Right.
 - **Where slots live:** downloaded programs are stored in this browser (localStorage).
 
-## VS Code + VEX extension look-alike (frontend `src/iq2/codeTab.ts`)
+## VS Code + VEX extension look-alike
+
+![Code tab](../images/iq2-code.png)
+ (frontend `src/iq2/codeTab.ts`)
 - **Theme:** VS Code's Dark Modern colours, with a menu bar, activity bar, side bar, editor tabs, breadcrumbs and a panel.
 - **Activity bar:** Explorer, Search (disabled) and VEX.
 - **VEX view:**

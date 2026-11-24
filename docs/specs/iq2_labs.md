@@ -1,5 +1,10 @@
 # Spec: lab-manual experiments (IQ 2nd gen)
 
+![Exp 10b mowing the yard](../images/iq2-sim.png)
+
+*Exp 10b (the lawn mower as in the manual's diagram) part-way through its second pass.*
+
+
 Sources (supplied by the user):
 - `docs/research/Document 23.pdf`: lab manual pages 49–67.
 - `docs/research/VEX_IQ_Example_Codes_crude.txt`: alternative versions. Not shipped; the CTE programs in it are ignored.

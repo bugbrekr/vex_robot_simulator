@@ -1,5 +1,10 @@
 # Spec: CTE lab-manual experiments
 
+![Exp 3 rhombus](../images/cte-rhombus.png)
+
+*Exp 3.3 has drawn a rhombus and its diagonals on the whiteboard.*
+
+
 Source: the user's lab manual, pages 31–47, supplied as a PDF in `docs/research/` (local only, not committed).
 
 The programs live in `backend/vexsim/examples/cte/labs/`. They are listed in `examples/cte/index.yaml` with `group: Lab Programs`, which puts them under **File ▸ Lab Programs** in the CTE app. Loading one also switches to its map.
