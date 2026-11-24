@@ -4,6 +4,7 @@ import { ICONS } from "../ui/icons";
 import { App } from "./app";
 import { BuildTab } from "./buildTab";
 import { CodeTab } from "./codeTab";
+import { mountDisplayMenu } from "./display";
 import { KEYS, store } from "./store";
 import { SimTab } from "./simTab";
 
@@ -11,6 +12,7 @@ document.querySelectorAll<HTMLElement>("[data-icon]").forEach((el) => {
   el.innerHTML = ICONS[el.dataset.icon as keyof typeof ICONS] ?? "";
 });
 
+mountDisplayMenu(document.getElementById("display-btn")!, document.getElementById("display-menu")!);
 const app = new App();
 new BuildTab(app);
 new CodeTab(app);

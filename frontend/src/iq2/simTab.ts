@@ -42,6 +42,7 @@ export class SimTab {
     app.on("maps", (maps) => this.fillMaps(maps));
     app.on("map", (id) => { $<HTMLSelectElement>("map").value = id; });
 
+    this.view.onDisplay = () => this.build(); // field colours and model detail follow the settings
     this.wireToolbar();
     this.wireBrainFace();
     this.wirePointer();
@@ -101,6 +102,7 @@ export class SimTab {
     const f = this.interp.sample(dt);
     if (f?.robot && this.robot) {
       this.robot.update(f.robot);
+      this.view.shadowFollow(f.robot.pose[0], f.robot.pose[1]);
       if (this.drag) this.robot.setPose(...this.dragPose());
     }
     if (this.follow && this.robot) {

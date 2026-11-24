@@ -1,26 +1,36 @@
 import * as THREE from "three";
 import type { IQ2FieldDesc } from "../net/protocol";
+import { LIGHTING, QUALITY, display } from "./display";
+import { std } from "./parts";
 
-/** White mat with tape lines (drawn into one canvas texture) and the fixed obstacles. */
+/** White foam mat with tape lines (drawn into one canvas texture) and the fixed obstacles. */
 export function buildField(f: IQ2FieldDesc): THREE.Group {
   const root = new THREE.Group();
   const [w, h] = f.floor.size;
+  const q = QUALITY[display.value.quality];
   // ground around the mat
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(w + 6000, h + 6000), new THREE.MeshStandardMaterial({ color: 0x9da7b1, roughness: 0.95 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(w + 6000, h + 6000), new THREE.MeshStandardMaterial({ color: LIGHTING[display.value.lighting].ground, roughness: 0.95 }));
   ground.position.z = -3;
   ground.receiveShadow = true;
   root.add(ground);
 
-  const px = 0.5; // texture pixels per mm
+  const px = 0.5 * q.texture; // texture pixels per mm
   const c = document.createElement("canvas");
   c.width = Math.round(w * px);
   c.height = Math.round(h * px);
   const g = c.getContext("2d")!;
   g.fillStyle = f.floor.color;
   g.fillRect(0, 0, c.width, c.height);
-  // faint 1 ft grid, like foam field tiles
-  g.strokeStyle = "rgba(0,0,0,0.05)";
-  g.lineWidth = 1;
+  // foam texture: fine speckle, then 1 ft tile seams
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < c.width * c.height * 0.02; i++) {
+    const v = rnd() < 0.5 ? 0 : 255;
+    g.fillStyle = `rgba(${v},${v},${v},${0.025 + rnd() * 0.03})`;
+    g.fillRect(rnd() * c.width, rnd() * c.height, 1.5 * q.texture, 1.5 * q.texture);
+  }
+  g.strokeStyle = "rgba(0,0,0,0.07)";
+  g.lineWidth = 1.2 * q.texture;
   for (let x = -w / 2; x <= w / 2; x += 304.8) { g.beginPath(); g.moveTo((x + w / 2) * px, 0); g.lineTo((x + w / 2) * px, c.height); g.stroke(); }
   for (let y = -h / 2; y <= h / 2; y += 304.8) { g.beginPath(); g.moveTo(0, (h / 2 - y) * px); g.lineTo(c.width, (h / 2 - y) * px); g.stroke(); }
   const tx = (x: number) => (x + w / 2) * px;
@@ -55,7 +65,7 @@ export function buildField(f: IQ2FieldDesc): THREE.Group {
   root.add(mat);
 
   for (const o of f.obstacles) {
-    const m = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.6 });
+    const m = std(new THREE.Color(o.color).getHex(), o.id.startsWith("wall_") ? 0.75 : 0.55);
     const mesh = o.shape === "cylinder"
       ? new THREE.Mesh(new THREE.CylinderGeometry(o.radius!, o.radius!, o.height, 40), m)
       : new THREE.Mesh(new THREE.BoxGeometry(o.size![0], o.size![1], o.height), m);

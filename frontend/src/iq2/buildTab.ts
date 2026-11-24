@@ -30,6 +30,12 @@ export class BuildTab {
     g.fillStyle = "#9fb3c8"; g.font = "10px Open Sans, sans-serif"; g.fillText("front ▲", 80, 70);
 
     app.on("hello", () => this.ensureRobot());
+    this.view.onDisplay = (_s, rebuild) => {
+      if (!rebuild || !this.robot) return;
+      this.view.scene.remove(this.robot.root);
+      this.robot = null;
+      this.ensureRobot();
+    };
     app.on("config", () => this.render());
     app.on("examples", () => this.fillPresets());
     $<HTMLButtonElement>("preset-default").onclick = () => this.app.setConfig(defaultConfig());
