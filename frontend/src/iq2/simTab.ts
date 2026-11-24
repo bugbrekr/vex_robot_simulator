@@ -34,6 +34,7 @@ export class SimTab {
     app.on("warning", (t) => this.console.warn(t));
     app.on("error", (e) => this.console.error(`${e.traceback ?? ""}${e.message}${e.line ? `  (line ${e.line})` : ""}`));
     app.on("status", (s) => {
+      $("bf-led").classList.toggle("running", s === "running");
       if (s === "running") this.console.info("[program started]");
       if (s === "finished") this.console.info("[program finished]");
       if (s === "stopped") this.console.info("[program stopped]");

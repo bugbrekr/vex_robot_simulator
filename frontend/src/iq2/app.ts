@@ -51,6 +51,12 @@ export class App {
       runSlot: (n) => this.runSlot(n),
       stopProgram: () => this.stop(),
       sendButton: (name, pressed) => this.send({ type: "brain_button", name, pressed }),
+      eraseAllSlots: () => { for (let n = 1; n <= 8; n++) if (this.slots[n]) this.eraseSlot(n); },
+      factoryReset: () => {
+        for (let n = 1; n <= 8; n++) if (this.slots[n]) this.eraseSlot(n);
+        this.brainName = "IQ2 Brain";
+        store.set(KEYS.brainName, this.brainName);
+      },
       changed: () => this.screenListeners.forEach((f) => f()),
     });
     this.session.onOpen = () => {

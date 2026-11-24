@@ -24,10 +24,12 @@ export class BuildTab {
     mat.receiveShadow = true;
     this.view.scene.add(mat);
     const g = this.screen.getContext("2d")!;
-    g.fillStyle = "#14171a"; g.fillRect(0, 0, 160, 108);
-    g.fillStyle = "#3fa3ff"; g.font = "700 14px Open Sans, sans-serif"; g.textAlign = "center";
-    g.fillText(app.brainName, 80, 50);
-    g.fillStyle = "#9fb3c8"; g.font = "10px Open Sans, sans-serif"; g.fillText("front ▲", 80, 70);
+    g.fillStyle = "#adafad"; g.fillRect(0, 0, 160, 20);
+    g.fillStyle = "#e6e6e6"; g.fillRect(0, 20, 160, 108);
+    g.fillStyle = "#2b2b2b"; g.font = "700 15px Open Sans, sans-serif"; g.textAlign = "center";
+    g.fillText(app.brainName, 80, 66);
+    g.fillStyle = "#151515"; g.fillRect(0, 108, 160, 20);
+    g.fillStyle = "#fff"; g.font = "700 11px Open Sans, sans-serif"; g.fillText("front ▲", 80, 122);
 
     app.on("hello", () => this.ensureRobot());
     this.view.onDisplay = (_s, rebuild) => {

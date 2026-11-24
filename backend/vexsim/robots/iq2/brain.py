@@ -11,12 +11,13 @@ from collections.abc import Callable
 
 from vexsim.core.entity import Entity
 
-WIDTH, HEIGHT = 160, 108  # REAL
+WIDTH, HEIGHT = 160, 108  # REAL: the program area below the brain's 20 px status bar
 MAX_OPS = 600  # ops kept since the last clear (older ones are dropped)
 DEFAULT_FONT = "mono20"  # REAL
-DEFAULT_PEN = "#ffffff"
-DEFAULT_FILL = "#000000"
-BACKGROUND = "#000000"
+# The IQ (2nd gen) screen is light-themed (KB screen captures): programs draw black on white.
+DEFAULT_PEN = "#000000"  # ESTIMATE
+DEFAULT_FILL = "#ffffff"  # ESTIMATE
+BACKGROUND = "#ffffff"  # ESTIMATE
 
 # font -> (character cell width, row height) in px. Rows/columns per screen match the API page
 # captions (MONO12 26x9, MONO15 20x7, MONO20 16x5, MONO30 x3, PROP20 26x5, PROP30 18x3, PROP40 14x2).

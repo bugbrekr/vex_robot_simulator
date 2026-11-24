@@ -76,16 +76,24 @@ body.iq2 { overflow: hidden; }
 .monitor tr.warn td { color: #b26b00; font-size: 11.5px; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid #0003; margin-right: 5px; vertical-align: -1px; }
 
-/* brain face (interactive) */
-.brain-face { background: linear-gradient(#5c6167, #484c52); border-radius: 14px; padding: 6px 10px 6px; box-shadow: inset 0 1px 0 #ffffff30, 0 3px 10px #0005; user-select: none; }
-.bf-ports { display: flex; justify-content: space-around; padding: 0 56px; font-size: 9px; color: #c7ccd2; }
-.bf-row { display: flex; align-items: center; gap: 8px; }
-.bf-screen { flex: 1; background: #111; border: 4px solid #1b1d20; border-radius: 6px; line-height: 0; }
+/* brain face (interactive): laid out like the real IQ (2nd gen) brain - ports 1-6 on top,
+   Left / grille / Right on the left of the screen, Check / status light / X on the right */
+.brain-face { background: #5b6066; border-radius: 16px; padding: 6px 12px 6px; border: 3px solid #4a4e53;
+  box-shadow: inset 0 0 0 2px #6a6f75, 0 3px 10px #0005; user-select: none; }
+.bf-ports { display: flex; justify-content: space-between; padding: 0 14px; font-size: 11px; font-weight: 700; color: #c9cdd2; }
+.bf-row { display: flex; align-items: center; gap: 12px; margin: 4px 0; padding: 0 6px; }
+.bf-screen { flex: 1; background: #f4f4f4; border: 5px solid #3e4247; border-radius: 6px; line-height: 0; box-shadow: 0 0 0 1px #6a6f75; }
 .bf-screen canvas { width: 100%; height: auto; image-rendering: auto; }
-.bf-btns { display: flex; flex-direction: column; gap: 10px; }
-.bf-btns button { width: 34px; height: 34px; border-radius: 8px; border: none; background: #2b2e32; color: #e8ecf0; font-size: 15px; box-shadow: 0 2px 0 #15171a; touch-action: none; }
-.bf-btns button:active { transform: translateY(2px); box-shadow: none; background: #3c4046; }
-.bf-btns button[data-btn="check"] { color: #53d769; }
+.bf-btns { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 10px; background: #50545a; box-shadow: inset 0 0 0 1px #6a6f75; }
+.bf-btns button { width: 32px; height: 32px; padding: 7px; border-radius: 6px; border: none; background: #232528; color: #f4f4f4;
+  box-shadow: 0 2px 0 #111, inset 0 1px 0 #3a3d41; touch-action: none; display: flex; }
+.bf-btns button svg { width: 100%; height: 100%; }
+.bf-btns button:active { transform: translateY(2px); box-shadow: none; background: #34373b; }
+.bf-grille { display: flex; flex-direction: column; gap: 3px; padding: 2px 0; }
+.bf-grille i { display: block; width: 22px; height: 3px; border-radius: 2px; background: #232528; }
+.bf-led { width: 20px; height: 8px; border-radius: 4px; background: #53e07a; box-shadow: 0 0 8px #53e07a; margin: 2px 0; }
+.bf-led.running { animation: bfled 1s ease-in-out infinite; }
+@keyframes bfled { 50% { opacity: 0.35; } }
 
 /* ------------------------------------------------------------------ code tab: VS Code look-alike */
 #tab-code { background: #181818; }

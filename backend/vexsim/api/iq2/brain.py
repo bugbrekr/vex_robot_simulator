@@ -71,11 +71,11 @@ class Screen:
 
     def set_pen_color(self, color=None) -> None:
         with self._lock():
-            self._b.pen = color_hex(color, "#ffffff") or "transparent"
+            self._b.pen = color_hex(color, "#000000") or "transparent"
 
     def set_fill_color(self, color=None) -> None:
         with self._lock():
-            self._b.fill = color_hex(color, "#000000") or "transparent"
+            self._b.fill = color_hex(color, "#ffffff") or "transparent"
 
     def set_origin(self, x, y) -> None:
         with self._lock():

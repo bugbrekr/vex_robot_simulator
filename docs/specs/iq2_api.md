@@ -85,7 +85,7 @@ Implementation: `backend/vexsim/api/iq2/`. Student code uses `from vex import *`
 - **Timer:** `brain.timer` with `time(MSEC|SECONDS)`, `clear()`, `event(cb, ms)`, `system()`, `system_high_res()`. Plus `Timer()`.
 - **Sound:** `brain.play_sound(SoundType.X)` prints a note in the console. Notes are silent.
 - **`brain.screen` (160×108 px, colour):**
-  - The default font is MONO20, the pen is white and the background is black.
+  - The default font is MONO20. The screen is light: the pen is black on a white background (ESTIMATE, consistent with the light theme in the KB captures).
   - `print(*args, precision=2, opaque=False)`: floats print with 2 decimals, and args are separated by a space (ESTIMATE).
   - Cursor: `set_cursor(row, col)`, `next_row()`, `row()`, `column()`. Text that runs past the edge is clipped, not wrapped.
   - **`clear_screen(color)` does not move the cursor** (confirmed by the user on the real brain).

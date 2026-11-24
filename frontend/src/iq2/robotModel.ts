@@ -60,21 +60,25 @@ export class RobotModel {
     this.screenTex.anisotropy = 4;
     const [sw, sh] = g.brain.screen_size;
     const top = bz + bsz / 2 + 0.6;
-    body.add(rbox([sh + 7, sw + 7, 1.2], std(0x17181a, 0.3), [bx - 6, by + 6, top], 2, seg));
+    body.add(rbox([sh + 7, sw + 7, 1.2], std(0x3e4247, 0.3), [bx, by, top], 2, seg));
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.screenTex, toneMapped: false }));
     scr.rotation.z = -Math.PI / 2;
-    scr.position.set(bx - 6, by + 6, top + 0.7);
+    scr.position.set(bx, by, top + 0.7);
     body.add(scr);
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(sw + 4, sh + 4),
       new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0, clearcoat: 1 }));
     glass.rotation.z = -Math.PI / 2;
-    glass.position.set(bx - 6, by + 6, top + 0.9);
+    glass.position.set(bx, by, top + 0.9);
     body.add(glass);
-    // buttons (X, check, left, right) beside the screen, and port sockets on the long edges
+    // buttons as on the real brain (the face's "top" is the robot's front): Left, grille, Right on
+    // the robot's left (+y); Check, status light, X on its right (-y)
     const btn = std(COL.button, 0.45);
-    for (const [dx, dy] of [[-15, -44], [-15, -31], [3, -44], [3, -31]]) {
+    const colY = sw / 2 + 12;
+    for (const [dx, dy] of [[10, colY], [-10, colY], [10, -colY], [-10, -colY]]) {
       body.add(rbox([10, 10, 3], btn, [bx + dx, by + dy, top + 0.6], 2, seg));
     }
+    for (const dx of [-2.5, 0, 2.5]) body.add(rbox([1.2, 8, 0.6], btn, [bx + dx, by + colY, top + 0.2], 0.3, seg));
+    body.add(rbox([3.5, 8, 1], std(0x53e07a, 0.3, 0, { emissive: 0x2fd25a, emissiveIntensity: 0.9 }), [bx, by - colY, top + 0.3], 0.5, seg));
     const portMat = std(COL.port, 0.7);
     for (let i = 0; i < 6; i++) {
       const yy = by + bsy / 2 - 12 - i * 17.4;

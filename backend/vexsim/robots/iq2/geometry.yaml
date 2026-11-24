@@ -32,7 +32,7 @@ brain:
   center: [-63.0, 0.0, 78.0]     # ESTIMATE
   size: [86.0, 111.0, 33.0]      # ESTIMATE  long edge across the robot; the screen's "up" points forward,
                                  #           so it reads upright for someone standing behind the robot
-  screen_size: [58.0, 39.0]      # ESTIMATE  160x108 px panel (REAL resolution)
+  screen_size: [44.0, 35.2]      # ESTIMATE  size; 160x128 px panel (REAL: KB captures), program area 160x108
 battery:
   center: [-63.0, 0.0, 49.0]     # ESTIMATE  under the brain
   size: [50.0, 79.0, 25.0]       # ESTIMATE

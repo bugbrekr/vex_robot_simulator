@@ -117,19 +117,21 @@
         </div>
         <aside class="sim-side">
           <div class="brain-face" id="brain-face">
-            <div class="bf-ports top"><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div>
+            <div class="bf-ports"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
             <div class="bf-row">
-              <div class="bf-btns left">
-                <button data-btn="x" title="X: stop / back (Backspace)">✕</button>
-                <button data-btn="check" title="Check: select (Enter)">✓</button>
+              <div class="bf-btns">
+                <button data-btn="left" title="Left (←)"><svg viewBox="0 0 10 10"><path d="M7 1.5L2.5 5 7 8.5z" fill="currentColor"/></svg></button>
+                <div class="bf-grille"><i></i><i></i><i></i></div>
+                <button data-btn="right" title="Right (→)"><svg viewBox="0 0 10 10"><path d="M3 1.5L7.5 5 3 8.5z" fill="currentColor"/></svg></button>
               </div>
               <div class="bf-screen" id="bf-screen"></div>
-              <div class="bf-btns right">
-                <button data-btn="left" title="Left (←)">◀</button>
-                <button data-btn="right" title="Right (→)">▶</button>
+              <div class="bf-btns">
+                <button data-btn="check" title="Check: select (Enter)"><svg viewBox="0 0 10 10"><path d="M2 5.2l2 2.3 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="bf-led" id="bf-led" title="Status light"></div>
+                <button data-btn="x" title="X: back / stop (Backspace)"><svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
               </div>
             </div>
-            <div class="bf-ports"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+            <div class="bf-ports"><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div>
           </div>
           <div class="side-card">
             <div class="side-head">Devices</div>
