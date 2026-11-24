@@ -23,6 +23,16 @@ uv run vexsim run my_program.py --scenario whiteboard --json
 uv run pytest
 ```
 
+## Server statistics: `/vex_cte/stats/`
+
+A public page with live server load and usage **counts**, refreshed every 2 s:
+- CPU % and load, and memory used.
+- Unique browsers and open tabs, with the CTE and IQ2 tab counts.
+- Loaded simulations and running programs.
+- Uptime, and program runs and connections since the server started.
+
+The data comes from `GET <base>/api/stats`. Each browser sends a random id that is only used to count distinct browsers. No id, IP or per-tab detail is ever returned.
+
 ## Hosting behind nginx
 
 Everything is served under one path, `/vex_cte/` by default (change it with `--base-path` or `VEXSIM_BASE_PATH`):

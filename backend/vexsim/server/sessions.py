@@ -11,6 +11,7 @@ import sys
 from collections.abc import Awaitable, Callable
 
 from vexsim.server.sandbox import SandboxConfig, setup_problem
+from vexsim.server.stats import STATS
 
 # Everything except "reset" (new scene = new worker process) goes to the persistent worker.
 LOCAL = {"reset"}
@@ -28,6 +29,7 @@ class Session:
         self._tasks: list[asyncio.Task] = []
         self.speed = 1.0
         self.scenario = DEFAULT_SCENARIO.get(platform, "cte_tile")
+        self.key = id(self)  # stats bookkeeping only (counts, never reported per session)
 
     async def start(self, scenario: str, code: str | None = None, tool: str | None = None,
                     marker: float | None = None) -> None:
@@ -45,6 +47,7 @@ class Session:
             stderr=asyncio.subprocess.PIPE,
             limit=16 * 1024 * 1024,
         )
+        STATS.set_worker(self.key, True)
         self._tasks = [
             asyncio.create_task(self._pump_stdout(self.proc)),
             asyncio.create_task(self._pump_stderr(self.proc)),
@@ -55,8 +58,12 @@ class Session:
     async def _pump_stdout(self, proc) -> None:
         assert proc.stdout is not None
         while line := await proc.stdout.readline():
+            text = line.decode().rstrip("\n")
+            if '"type":"status"' in text:  # cheap check: only status lines are parsed
+                with contextlib.suppress(ValueError):
+                    STATS.set_running(self.key, json.loads(text).get("state") == "running")
             with contextlib.suppress(Exception):
-                await self.send(line.decode().rstrip("\n"))
+                await self.send(text)
 
     async def _pump_stderr(self, proc) -> None:
         assert proc.stderr is not None
@@ -90,6 +97,8 @@ class Session:
             return
         if kind == "speed":
             self.speed = float(msg.get("value", 1.0))
+        if kind == "run":
+            STATS.run_started()
         if self.proc is None or self.proc.returncode is not None:
             # (re)start the scene; a run keeps using the same live scene afterwards
             await self.start(msg.get("scenario", self.scenario), None)
@@ -102,6 +111,8 @@ class Session:
                 await self.proc.stdin.drain()
 
     async def kill(self) -> None:
+        STATS.set_worker(self.key, False)
+        STATS.set_running(self.key, False)
         proc, self.proc = self.proc, None
         container, self.container = self.container, None
         # remove the container first: killing the `docker run` client alone may leave it running

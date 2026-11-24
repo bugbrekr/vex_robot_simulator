@@ -24,8 +24,8 @@ export default defineConfig(({ command }) => ({
   plugins: [buildInfo],
   build: {
     chunkSizeWarningLimit: 1500,
-    // two pages: the CTE arm (index.html) and VEX IQ 2nd gen (iq2/index.html)
-    rollupOptions: { input: { main: resolve(__dirname, "index.html"), iq2: resolve(__dirname, "iq2/index.html") } },
+    // pages: the CTE arm (index.html), VEX IQ 2nd gen (iq2/index.html) and server stats (stats/index.html)
+    rollupOptions: { input: { main: resolve(__dirname, "index.html"), iq2: resolve(__dirname, "iq2/index.html"), stats: resolve(__dirname, "stats/index.html") } },
   },
   server: {
     port: 5173,

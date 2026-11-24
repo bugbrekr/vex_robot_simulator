@@ -2,6 +2,21 @@ import type { ClientMsg, ServerMsg } from "./protocol";
 
 type Handler = (msg: ServerMsg) => void;
 
+/** A random id per browser (not per tab). The server only counts distinct ids. */
+function clientId(): string {
+  const key = "vexsim:client";
+  try {
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 /** WebSocket client with auto-reconnect. */
 export class SimSession {
   private ws: WebSocket | null = null;
@@ -19,6 +34,7 @@ export class SimSession {
   private connect(): void {
     // relative to the page, so the app works under any reverse-proxy prefix
     const url = new URL(`${this.base}ws/${this.platform}`, location.href);
+    url.searchParams.set("cid", clientId()); // anonymous; lets the server count distinct browsers
     url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(url);
     this.ws = ws;

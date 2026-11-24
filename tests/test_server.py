@@ -65,3 +65,19 @@ def test_base_path_redirects_are_relative():
     assert r.headers["location"] == "vex_cte/"
     assert c.get("/vex_cte/api/health").json()["base_path"] == "/vex_cte"
     assert c.get("/api/platforms/cte/scenarios").status_code == 404  # only under the base path
+
+
+def test_stats_counts_browsers_and_tabs_without_identifying_them():
+    with TestClient(app) as c:
+        base = c.get("/vex_cte/api/stats").json()["clients"]  # other tests may have left sessions open
+        with c.websocket_connect("/vex_cte/ws/iq2?cid=browserA") as a1, \
+                c.websocket_connect("/vex_cte/ws/cte?cid=browserA") as a2, \
+                c.websocket_connect("/vex_cte/ws/iq2?cid=browserB") as b1:
+            for ws in (a1, a2, b1):
+                ws.receive_text()  # server build message
+            st = c.get("/vex_cte/api/stats").json()
+            delta = {k: st["clients"][k] - base[k] for k in base}
+            assert delta == {"browsers": 2, "tabs": 3, "tabs_cte": 1, "tabs_iq2": 2}
+            assert "browserA" not in str(st)  # ids are only counted, never returned
+            assert set(st) == {"uptime", "cpu", "memory", "clients", "simulations", "totals", "history"}
+        assert c.get("/vex_cte/api/stats").json()["clients"]["tabs"] == base["tabs"]

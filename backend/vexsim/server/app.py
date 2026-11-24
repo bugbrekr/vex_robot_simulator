@@ -19,12 +19,13 @@ import os
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from vexsim.core.config import list_examples, list_scenarios, load_example, load_scenario
 from vexsim.server.sandbox import SandboxConfig
 from vexsim.server.sessions import Session
+from vexsim.server.stats import STATS
 
 BASE_PATH = "/" + os.environ.get("VEXSIM_BASE_PATH", "/vex_cte").strip("/")
 FRONTEND_DIST = Path(os.environ.get("VEXSIM_FRONTEND_DIST",
@@ -63,7 +64,9 @@ async def _lifespan(_app):
     removed = await SANDBOX.cleanup_leftovers()  # containers orphaned by a crashed server
     if removed:
         print(f"vexsim: removed {removed} leftover worker container(s)")
+    STATS.start()
     yield
+    await STATS.stop()
 
 
 app = FastAPI(title="VEX Simulator", docs_url=f"{BASE_PATH}/api/docs",
@@ -108,12 +111,21 @@ def health() -> dict:
             "sandbox": SANDBOX.mode}
 
 
+@router.get("/api/stats")
+def stats(response: Response) -> dict:
+    """Public server statistics: aggregate counts and host load only (see server/stats.py)."""
+    response.headers["Cache-Control"] = "no-store"
+    return STATS.snapshot(SANDBOX.mode)
+
+
 @router.websocket("/ws/{platform}")
 async def ws_session(ws: WebSocket, platform: str) -> None:
     await ws.accept()
     # tell the page which frontend build is being served (stale tabs offer a reload)
     await ws.send_text(json.dumps({"type": "server", "build": _build_id()}))
     session = Session(ws.send_text, platform, SANDBOX)
+    # a random per-browser id (localStorage), used only to count distinct browsers
+    STATS.open(session.key, platform if platform in ("cte", "iq2") else "other", ws.query_params.get("cid", ""))
     try:
         while True:
             msg = json.loads(await ws.receive_text())
@@ -122,6 +134,7 @@ async def ws_session(ws: WebSocket, platform: str) -> None:
         pass
     finally:
         await session.kill()
+        STATS.close(session.key)
 
 
 app.include_router(router)
