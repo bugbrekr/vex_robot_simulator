@@ -125,7 +125,7 @@ def test_session_runs_program_in_container_and_removes_it(fake_docker, monkeypat
 
 def test_namespace_failure_shows_one_plain_message(fake_docker, monkeypatch):
     """Rootless Podman under NoNewPrivileges: raw engine errors stay in the server log."""
-    d, cfg = fake_docker
+    _, cfg = fake_docker
     import vexsim.server.app as appmod
 
     monkeypatch.setattr(appmod, "SANDBOX", cfg)
