@@ -6,3 +6,8 @@ __pycache__/
 node_modules/
 frontend/dist/
 *.egg-info/
+
+# Personal research drop folder: anything in docs/research is local-only,
+# except the tracked index of sources.
+docs/research/*
+!docs/research/sources.md
