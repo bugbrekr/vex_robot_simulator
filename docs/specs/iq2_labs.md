@@ -16,7 +16,8 @@ The shipped programs are in `backend/vexsim/examples/iq2/labs/` and listed in `e
 | 7 Sensor Bed | `exp07_sensor_bed.py` | `sensor_bed` | motors L6 / R1, bumper 11, distance 5, optical 3, Touch LED 4 | yes |
 | 8 Line Runner Challenge | `exp08_line_runner.py` | `line_runner` | motors L6 / R1, optical 7 | yes |
 | 9 Five Laps (Distance) | `exp09_five_laps.py` | `five_laps` | motors L6 / R1, distance 5 | yes |
-| 10 Robo Lawn Mower | `exp10_lawn_mower.py` | `lawn_mower` | motors L6 / R1, optical 3 | no |
+| 10 Robo Lawn Mower | `exp10_lawn_mower.py` | `lawn_mower` | motors L6 / R1, optical 3 | yes (other batch) |
+| 10b Lawn Mower, as in the diagram | `exp10b_lawn_mower_diagram.py` | `lawn_mower` | motors L6 / R1, optical 3 | yes (other batch) |
 
 Ports and thresholds differ between real robots and setups. The manual's values are only defaults.
 
@@ -32,13 +33,14 @@ Ports and thresholds differ between real robots and setups. The manual's values 
 3. **Exp 7, 8 and 9 screen text:** `clear_screen()` does not reset the cursor (confirmed on the real brain), so text moves down and to the right, eventually off the screen. Add `set_cursor(1, 1)`.
 4. **Exp 8 stops past the line:** it waits 400 ms before stopping, so it stops about 30 mm past each line. Also, the aim says "stop at the third line", but the code returns to the start.
 5. **Exp 9 lap count:** `range(x + 1)` with 16 gives 17 sides, which is 4¼ laps. This is the exercise.
-6. **Exp 10 turns:** the diagram shows 180° back-and-forth passes but the code makes 85° right turns.
-   - The user confirmed that on the real robots `turn_for(85)` (DriveTrain, encoder turns) turns about 90°. The robots also don't drive perfectly straight, and the 5° allowance keeps them working for a couple of laps.
-   - Realistic mode models both effects.
-   - **Open question:** on a plain rectangle the program, as written, can't reach the next line in either mode.
-     - After `drive_for(200 mm)` and the turn, the robot is outside the yard, travelling parallel to the boundary.
-     - Extending the tapes past the corners (a `#` shape) doesn't fix it: the robot then crosses the perpendicular tape first.
-     - Waiting on how the real field is laid out.
+6. **Exp 10: the diagram and the code disagree.** The diagram shows back-and-forth mowing with 180° U-turns. The code follows the boundary with 85° right turns.
+   - The code only works on a **rear-wheel-drive** robot. There the Optical sensor is a wheelbase plus 50 mm ahead of the turning axle, so after `drive_for(200 mm)` and the turn, it can still reach the next line.
+     - Realistic mode, where `turn_for(85)` turns about 90° as on the lab robots: RWD completes the yard in about 6 of 8 runs, FWD in none.
+     - On FWD the robot ends up outside the yard, beside the boundary, and stops at the mat wall.
+   - **`exp10b_lawn_mower_diagram.py`** does what the diagram shows.
+     - It mows a pass until the line, makes a U-turn (turn down the yard, move one row of 200 mm, turn back), and alternates right and left U-turns until the bottom line appears during a row change.
+     - It turns to absolute gyro headings (0°, 90°, 180°), so the drift from unguided straight driving is cancelled at every U-turn instead of adding up.
+     - It completes in both layouts and both modes: 6 passes on FWD, 5 on RWD.
 
 ## Maps (ESTIMATE sizes, from the manual's figures; edit `backend/vexsim/scenarios/iq2/*.yaml`)
 

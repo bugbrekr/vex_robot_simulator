@@ -68,3 +68,27 @@ def test_drive_square_returns_home():
     assert s["state"] == "finished"
     x, y, _ = s["robot"]["pose"]
     assert x == pytest.approx(0, abs=5) and y == pytest.approx(-600, abs=5)
+
+
+@pytest.mark.parametrize("drive,realistic", [("fwd", False), ("fwd", True), ("rwd", True)])
+def test_exp10b_mows_the_yard_in_passes(drive, realistic):
+    ex = EXAMPLES["exp10b_lawn_mower_diagram"]
+    cfg = preset_config(ex["robot"])
+    cfg["drive"] = drive
+    w = Worker("iq2", ex["map"], (ROOT / ex["file"]).read_text(), max_time=150, robot_config=cfg,
+               realistic=realistic, seed=1)
+    s = w.run_headless()
+    assert s["state"] == "finished" and not s["errors"]
+    assert s["screen"][0].startswith("Yard done")
+    assert s["robot"]["contacts"] == []
+    assert s["robot"]["pose"][1] < -400  # reached the bottom of the yard (bottom line at -650)
+
+
+def test_exp10_boundary_following_needs_rear_wheel_drive():
+    ex = EXAMPLES["exp10_lawn_mower"]
+    for drive, expect in (("rwd", "finished"), ("fwd", "stopped")):
+        cfg = preset_config(ex["robot"])
+        cfg["drive"] = drive
+        s = Worker("iq2", ex["map"], (ROOT / ex["file"]).read_text(), max_time=60, robot_config=cfg,
+                   realistic=True, seed=2).run_headless()
+        assert s["state"] == expect, drive

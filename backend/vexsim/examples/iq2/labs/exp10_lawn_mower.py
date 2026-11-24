@@ -1,4 +1,4 @@
-# Experiment 10: Robo Lawn Mower Using Light Sensor (lab manual pp. 64-67) - not in the exam
+# Experiment 10: Robo Lawn Mower Using Light Sensor (lab manual pp. 64-67)
 #
 # Drive until the Optical sensor sees the yard's black boundary (brightness < 80 %), drive
 # 200 mm further, turn right 85 degrees, repeat for each side.
@@ -11,7 +11,13 @@
 #   * only turn_right() is used, so the robot traces the boundary instead of mowing the yard;
 #     the diagram's back-and-forth (180 degree) passes need turn_left() too
 # Note: DriveTrain (no gyro) turns by wheel encoders; 85 degrees is the manual's allowance
-# for real robots over-rotating. In the simulator's ideal mode the turn is exactly 85.
+# for real robots over-rotating (realistic mode turns ~90, ideal mode exactly 85).
+# The code follows the boundary only on a REAR-wheel-drive robot (Build tab: RWD): there the
+# Optical sensor is far ahead of the turning axle, so after the 200 mm drive past the line the
+# robot turns while its sensor can still reach the next line. On a front-wheel-drive robot it
+# ends up outside the yard, driving beside the boundary. (Realistic mode: RWD completes the
+# yard in about 6 of 8 runs, FWD in none.)
+# The figure's back-and-forth mowing is in exp10b_lawn_mower_diagram.py.
 from vex import *
 
 brain = Brain()

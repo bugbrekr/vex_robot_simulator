@@ -13,5 +13,7 @@
    robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 7}}}
 - {id: exp09_five_laps, title: "Exp 9: Five Laps Using Sonic Sensor", file: labs/exp09_five_laps.py, map: five_laps, group: Lab Programs, exam: true,
    robot: {left_motor: {port: 6}, right_motor: {port: 1}, distance: {port: 5}}}
-- {id: exp10_lawn_mower, title: "Exp 10: Robo Lawn Mower", file: labs/exp10_lawn_mower.py, map: lawn_mower, group: Lab Programs, exam: false,
+- {id: exp10_lawn_mower, title: "Exp 10: Robo Lawn Mower", file: labs/exp10_lawn_mower.py, map: lawn_mower, group: Lab Programs, exam: true,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 3}}}
+- {id: exp10b_lawn_mower_diagram, title: "Exp 10b: Lawn Mower (as in the diagram)", file: labs/exp10b_lawn_mower_diagram.py, map: lawn_mower, group: Lab Programs, exam: true,
    robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 3}}}
