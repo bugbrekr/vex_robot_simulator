@@ -35,8 +35,18 @@ def default_config() -> dict:
     return {d: {"port": int(g["default_ports"][d]), "enabled": True} for d in DEVICES}
 
 
+DRIVES = ("fwd", "rwd")
+
+
+def drive_of(cfg: dict | None) -> str:
+    """The drive layout in a config: "fwd" (motors on the front axle, default) or "rwd"."""
+    d = (cfg or {}).get("drive", "fwd")
+    return d if d in DRIVES else "fwd"
+
+
 def normalize_config(cfg: dict | None) -> dict:
-    """Merge a (possibly partial) config into the defaults; ports clamp to 1-12."""
+    """Merge a (possibly partial) device config into the defaults; ports clamp to 1-12.
+    (The ``drive`` key, if any, is read separately with ``drive_of``.)"""
     out = default_config()
     for d, v in (cfg or {}).items():
         if d in out and isinstance(v, dict):
@@ -134,8 +144,10 @@ class IQRobotModel(Entity):
         start = start or {}
         self.start_pose = (float(start.get("x", 0.0)), float(start.get("y", 0.0)),
                            math.radians(float(start.get("yaw", 90.0))))
-        self.x, self.y, self.theta = self.start_pose
         self.config = normalize_config(config)
+        self.drive = drive_of(config)
+        # map starts give the chassis position (its FWD axle point); the pose is the drive axle
+        self.x, self.y, self.theta = self.start_world()
         mcfg = self.g["motor"]
         self.motors = {"left_motor": SmartMotorModel("left_motor", mcfg),
                        "right_motor": SmartMotorModel("right_motor", mcfg)}
@@ -184,8 +196,23 @@ class IQRobotModel(Entity):
             self.wheel_scale = {m: 1.0 for m in self.motors}
             self.turn_gain = 1.0
 
+    @property
+    def offset(self) -> float:
+        """Chassis-frame x of the pose origin's offset: the pose is always the centre of the
+        driven axle (the turning point). Geometry is given for FWD (drive axle at chassis x = 0);
+        with RWD the motors and tyres sit on the rear axle, so the chassis lies ahead of it."""
+        return self.g["drive"]["wheel_base"] if self.drive == "rwd" else 0.0
+
     def set_config(self, cfg: dict) -> None:
         self.config = normalize_config(cfg)
+        drive = drive_of(cfg)
+        if drive != self.drive:
+            # keep the chassis where it is on the mat: move the pose to the new drive axle
+            old = self.offset
+            self.drive = drive
+            dx = old - self.offset
+            self.x, self.y = self.to_world(dx, 0.0)
+            self._update_sensors(0.0)
 
     def device_at(self, port: int) -> str | None:
         """Name of the enabled device plugged into a Smart Port (None if the port is empty)."""
@@ -224,8 +251,13 @@ class IQRobotModel(Entity):
         self.inertial.yaw_cw += -math.degrees(_wrap(self.theta - old))
         self._update_sensors(0.0)
 
+    def start_world(self) -> tuple[float, float, float]:
+        """Pose (driven-axle centre) that puts the chassis on the map's start."""
+        x, y, th = self.start_pose
+        return x - self.offset * math.cos(th), y - self.offset * math.sin(th), th
+
     def reset_pose(self) -> None:
-        self.place(*self.start_pose)
+        self.place(*self.start_world())
 
     def add_controller(self, fn: Callable[[float], bool]) -> None:
         self.controllers.append(fn)
@@ -241,16 +273,20 @@ class IQRobotModel(Entity):
         c, s = math.cos(th), math.sin(th)
         return x + px * c - py * s, y + px * s + py * c
 
+    def chassis_to_world(self, px: float, py: float, x=None, y=None, theta=None) -> tuple[float, float]:
+        """A point given in the chassis frame (geometry.yaml, FWD layout) -> world."""
+        return self.to_world(px + self.offset, py, x, y, theta)
+
     def footprint(self, x=None, y=None, theta=None, grow: float = 0.0) -> list[tuple[float, float]]:
         f = self.g["footprint"]
         hw, fr, re = f["half_width"] + grow, f["front"] + grow, f["rear"] - grow
-        return [self.to_world(px, py, x, y, theta) for px, py in ((fr, hw), (re, hw), (re, -hw), (fr, -hw))]
+        return [self.chassis_to_world(px, py, x, y, theta) for px, py in ((fr, hw), (re, hw), (re, -hw), (fr, -hw))]
 
     def bumper_zone(self) -> list[tuple[float, float]]:
         f = self.g["footprint"]
         hy = self.g["mounts"]["bumper"]["size"][1] / 2 + 4
         x0, x1 = f["front"] - 4, f["front"] + 2.5
-        return [self.to_world(px, py) for px, py in ((x1, hy), (x0, hy), (x0, -hy), (x1, -hy))]
+        return [self.chassis_to_world(px, py) for px, py in ((x1, hy), (x0, hy), (x0, -hy), (x1, -hy))]
 
     # ------------------------------------------------------------------ stepping
     def step(self, t: float, dt: float) -> None:
@@ -325,7 +361,7 @@ class IQRobotModel(Entity):
         # distance sensor
         dc = g["sensors"]["distance"]
         m = g["mounts"]["distance"]
-        sx, sy = self.to_world(m["pos"][0], m["pos"][1])
+        sx, sy = self.chassis_to_world(m["pos"][0], m["pos"][1])
         best, hit = None, None
         ha = math.radians(dc["beam_half_angle"])
         for off in (0.0, -ha, ha):
@@ -351,7 +387,7 @@ class IQRobotModel(Entity):
         # optical sensor (faces the floor)
         oc = g["sensors"]["optical"]
         om = g["mounts"]["optical"]
-        ox, oy = self.to_world(om["pos"][0], om["pos"][1])
+        ox, oy = self.chassis_to_world(om["pos"][0], om["pos"][1])
         rad = oc["spot_radius"]
         samples = [(ox, oy)] + [(ox + rad * math.cos(a), oy + rad * math.sin(a))
                                 for a in (k * math.pi / 3 for k in range(6))]
@@ -396,13 +432,13 @@ class IQRobotModel(Entity):
             "touchled": {"color": tl.lit_color(self.t), "pressed": tl.pressed,
                          "brightness": tl.brightness},
             "contacts": self.contacts,
-            "config": self.config,
+            "config": {**self.config, "drive": self.drive},
         }
 
     def describe(self) -> dict:
         return {"name": self.name, "kind": self.kind, "geometry": self.g,
-                "start": [self.start_pose[0], self.start_pose[1], math.degrees(self.start_pose[2])],
-                "config": self.config}
+                "start": [*self.start_world()[:2], math.degrees(self.start_pose[2])],
+                "config": {**self.config, "drive": self.drive}}
 
 
 # ---------------------------------------------------------------------- helpers

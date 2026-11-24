@@ -214,3 +214,35 @@ def test_every_map_has_walls_that_stop_a_runaway_robot():
     assert s["robot"]["contacts"] == ["wall_n"]
     assert s["robot"]["pose"][1] == pytest.approx(1200 - 85, abs=3)  # bumper face against the wall
     assert not s["errors"]
+
+
+def test_rwd_turns_about_the_rear_axle_and_keeps_the_chassis_on_the_start():
+    from vexsim.robots.iq2.robot import load_geometry
+
+    wb = load_geometry()["drive"]["wheel_base"]
+    spin = (HEAD + "left.spin_for(FORWARD, 450, DEGREES, wait=False)\nright.spin_for(REVERSE, 450, DEGREES)\n")
+    fwd = run(spin)
+    cfg = default_config()
+    cfg["drive"] = "rwd"
+    rwd = run(spin, config=cfg)
+    assert rwd["robot"]["config"]["drive"] == "rwd"
+    # same chassis start: the RWD pose (rear axle) is one wheelbase behind the FWD one
+    assert rwd["robot"]["pose"][1] == pytest.approx(fwd["robot"]["pose"][1] - wb, abs=0.5)
+    # same wheel motion turns both robots by the same angle, each about its driven axle
+    assert rwd["robot"]["pose"][2] == pytest.approx(fwd["robot"]["pose"][2], abs=0.5)
+    w = rwd["worker"].devices["robot"]
+    fx, fy = fwd["worker"].devices["robot"].chassis_to_world(50, 0)
+    rx, ry = w.chassis_to_world(50, 0)
+    assert math.hypot(rx - fx, ry - fy) > 100  # the optical spot swung on a wider arc
+
+
+def test_switching_drive_layout_keeps_the_chassis_in_place():
+    w = Worker("iq2", "blank", None, realistic=False)
+    r = w.devices["robot"]
+    before = r.footprint()
+    cfg = default_config()
+    cfg["drive"] = "rwd"
+    r.set_config(cfg)
+    assert r.drive == "rwd"
+    for (ax, ay), (bx, by) in zip(before, r.footprint(), strict=True):
+        assert ax == pytest.approx(bx, abs=1e-6) and ay == pytest.approx(by, abs=1e-6)

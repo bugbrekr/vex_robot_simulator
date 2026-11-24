@@ -50,7 +50,7 @@ The frontend uses only relative URLs, so nginx can put any prefix in front, for 
 
 | Tab | What it does |
 |---|---|
-| **Build** | Fixed chassis: front-wheel drive with 200 mm tyres on two Smart Motors and free omni wheels at the rear. Four L corner connectors hold the brain, whose screen faces the person behind the robot. Each sensor (Distance, Optical facing the floor, Bumper, Touch LED) can be switched on or off and moved to any Smart Port. Lab presets are included, plus the matching configuration code |
+| **Build** | Fixed chassis with a front-wheel (FWD) or rear-wheel (RWD) drive layout: 200 mm tyres on two Smart Motors, and free omni wheels on the other axle. Four L corner connectors hold the brain, whose screen faces the person behind the robot. Each sensor (Distance, Optical facing the floor, Bumper, Touch LED) can be switched on or off and moved to any Smart Port. Lab presets are included, plus the matching configuration code |
 | **Code** | VS Code-style editor with the VEX extension: New Project wizard (IQ 2nd gen, Python, templates), Explorer, a VEX view with Device Info, slots and Lab Programs, Slot Selector, Download, Play and Stop, plus Log, Interactive and Problems panels. Projects and slots are stored in the browser |
 | **Simulator** | Maps (blank, plus the Exp 7–10 courses, all walled), a clickable brain (Programs, Devices and Settings menus; Check, X, Left and Right buttons; 160×108 colour screen), and a live device monitor. Drag the robot to move it; click the Touch LED or bumper to press them. Sensors are realistic by default (seeded noise, drift, slip), with an ideal switch |
 

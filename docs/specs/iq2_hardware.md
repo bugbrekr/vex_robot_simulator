@@ -35,6 +35,13 @@ The robot is BaseBot-style, as in [IMG], but with front-wheel drive:
 | Touch LED | top rear, behind the brain | 4 (LAB) |
 | Inertial | built into the brain | – |
 
+## Drive layout: FWD or RWD (Build tab)
+- **FWD** (default): motors and tyres on the front axle, omni wheels at the rear. **RWD**: swapped.
+- `geometry.yaml` describes the chassis in its FWD layout (drive axle at chassis x = 0). The robot's pose is always the centre of the **driven** axle, which is the point a two-wheel drive turns about.
+- With RWD the chassis, sensors and bumper sit one wheelbase (127 mm) ahead of the pose. So the robot pivots about its rear axle, and the front sensors swing through a wider arc when it turns.
+- Map starts give the chassis position. Switching the layout keeps the chassis where it is on the mat.
+- The config key is `drive: "fwd" | "rwd"`, sent with `robot_config`. Lab presets keep the current layout.
+
 ## Frame and drive
 
 The robot frame has its origin at the drive-axle centre on the floor. +x points forward, +y points left, and +z points up. The pose is this point, and a differential drive turns about it.

@@ -17,6 +17,12 @@ export class RobotModel {
   readonly pick = { touchled: [] as THREE.Object3D[], bumper: [] as THREE.Object3D[], chassis: [] as THREE.Object3D[] };
   private wheels: Record<"left_motor" | "right_motor", THREE.Group> = {} as never;
   private omnis: THREE.Group[] = [];
+  /** the chassis in its own (FWD) frame; shifted forward of the pose for RWD */
+  private body = new THREE.Group();
+  /** motors, tyres and their axles sit on the driven axle; omnis + axles on the other one */
+  private driveParts: THREE.Object3D[] = [];
+  private freeParts: THREE.Object3D[] = [];
+  private drive: "fwd" | "rwd" = "fwd";
   private ledMat: THREE.MeshPhysicalMaterial;
   private plunger!: THREE.Mesh;
   private plungerX = 0;
@@ -30,13 +36,13 @@ export class RobotModel {
     const p = g.pitch;
     const r = g.drive.wheel_travel / (2 * Math.PI);
     const halfTrack = g.drive.track_width / 2;
-    const body = new THREE.Group();
+    const body = this.body;
     this.root.add(body);
     if (q.contactShadow) {
       const f = g.footprint;
       const cs = contactShadow((f.front - f.rear) * 1.25, f.half_width * 2.5);
       cs.position.x = (f.front + f.rear) / 2;
-      this.root.add(cs);
+      body.add(cs);
     }
 
     // chassis: drilled side rails, front/rear crossbars, and two plates under the battery
@@ -125,11 +131,13 @@ export class RobotModel {
       const axle = yCyl(2.2, halfTrack - railY + 10, axleMat, 12);
       axle.position.set(0, s * (railY + (halfTrack - railY) / 2), r);
       body.add(axle);
+      this.driveParts.push(motor, axle);
       const w = travelWheel(r, g.drive.wheel_width, seg, q.texture);
       w.position.set(0, s * halfTrack, r);
       if (s < 0) w.scale.y = -1;
       this.wheels[side] = w;
       body.add(w);
+      this.driveParts.push(w);
     }
     // rear omni wheels (free)
     for (const s of [1, -1]) {
@@ -140,6 +148,7 @@ export class RobotModel {
       const axle = yCyl(2.2, halfTrack - railY + 10, axleMat, 12);
       axle.position.set(-g.drive.wheel_base, s * (railY + (halfTrack - railY) / 2), r);
       body.add(axle);
+      this.freeParts.push(w, axle);
     }
 
     // sensors at their fixed mounts
@@ -192,7 +201,18 @@ export class RobotModel {
   }
 
   // ------------------------------------------------------------ updates
+  /** FWD: motors and tyres on the front axle (chassis x = 0), omnis at the rear.
+   *  RWD: swapped. The pose is always the driven axle, so the chassis shifts forward of it. */
+  setDrive(drive: "fwd" | "rwd"): void {
+    this.drive = drive;
+    const wb = this.g.drive.wheel_base;
+    for (const o of this.driveParts) o.position.x = drive === "rwd" ? -wb : 0;
+    for (const o of this.freeParts) o.position.x = drive === "rwd" ? 0 : -wb;
+    this.body.position.x = drive === "rwd" ? wb : 0;
+  }
+
   setConfig(cfg: IQ2Config): void {
+    if ((cfg.drive ?? "fwd") !== this.drive) this.setDrive(cfg.drive ?? "fwd");
     for (const d of ["distance", "optical", "bumper", "touchled"] as const) this.devices[d].visible = cfg[d].enabled;
     for (const d of ["left_motor", "right_motor"] as const) {
       this.devices[d].traverse((o) => {

@@ -41,6 +41,14 @@ export class BuildTab {
     app.on("config", () => this.render());
     app.on("examples", () => this.fillPresets());
     $<HTMLButtonElement>("preset-default").onclick = () => this.app.setConfig(defaultConfig());
+    document.querySelectorAll<HTMLButtonElement>("[data-drive]").forEach((b) => {
+      b.onclick = () => {
+        const drive = b.dataset.drive as "fwd" | "rwd";
+        if ((this.app.config.drive ?? "fwd") === drive) return;
+        this.app.setConfig({ ...this.app.config, drive }, true);
+        toast(drive === "rwd" ? "Rear-wheel drive: motors on the rear axle" : "Front-wheel drive: motors on the front axle");
+      };
+    });
     $("copy-config").onclick = async () => {
       try { await navigator.clipboard.writeText($("config-code").textContent ?? ""); toast("Configuration code copied"); }
       catch { toast("Clipboard unavailable"); }
@@ -53,6 +61,7 @@ export class BuildTab {
     this.robot = new RobotModel(this.app.robotDesc.geometry, this.screen);
     this.robot.screenChanged();
     this.robot.setPose(60, 0, 0);
+    this.robot.setConfig(this.app.config);
     this.view.scene.add(this.robot.root);
     this.render();
   }
@@ -70,6 +79,7 @@ export class BuildTab {
 
   private render(): void {
     const cfg = this.app.config;
+    document.querySelectorAll<HTMLElement>("[data-drive]").forEach((b) => b.classList.toggle("on", b.dataset.drive === (cfg.drive ?? "fwd")));
     const conflicts = portConflicts(cfg);
     const table = $("dev-table");
     table.innerHTML = `<tr><th></th><th>Device</th><th>Port</th></tr>` + DEVICES.map((d) => {
@@ -100,6 +110,8 @@ export class BuildTab {
     });
     if (this.robot) {
       this.robot.setConfig(cfg);
+      // keep the chassis centred on the turntable whichever axle is driven
+      this.robot.setPose(60 - (cfg.drive === "rwd" ? this.robot.g.drive.wheel_base : 0), 0, 0);
       this.robot.showPortLabels(cfg);
     }
     $("config-code").textContent = configCode(cfg);

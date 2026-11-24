@@ -41,8 +41,8 @@ export const DEVICE_SHORT: Record<IQ2Device, string> = {
 };
 /** Fixed mounting spot (the chassis can't change). */
 export const DEVICE_MOUNT: Record<IQ2Device, string> = {
-  left_motor: "front left, drives the left tyre wheel",
-  right_motor: "front right, drives the right tyre wheel (mounted mirrored: reverse it in code)",
+  left_motor: "drives the left tyre wheel",
+  right_motor: "drives the right tyre wheel (mounted mirrored: reverse it in code)",
   distance: "front, facing forward",
   optical: "front underside, facing the floor",
   bumper: "front face",
@@ -76,6 +76,7 @@ export function loadConfig(): IQ2Config {
   const saved = store.get<Partial<IQ2Config>>(KEYS.config, {});
   const cfg = defaultConfig();
   for (const d of DEVICES) if (saved[d]) cfg[d] = { ...cfg[d], ...saved[d] };
+  cfg.drive = saved.drive === "rwd" ? "rwd" : "fwd";
   return cfg;
 }
 

@@ -30,7 +30,14 @@
         <div class="build-view" id="build-view"></div>
         <aside class="build-side">
           <h2>Robot build</h2>
-          <p class="muted">The chassis is a BaseBot-style frame with front-wheel drive. The tyre wheels are on the two motors at the front, and free omni wheels are at the rear. Four L corner connectors hold the brain, and its screen faces the person behind the robot. Each sensor has a fixed mount: switch it on or off, and choose its Smart Port.</p>
+          <p class="muted">The chassis is a BaseBot-style frame: two motors turn tyre wheels on one axle, and free omni wheels sit on the other. Four L corner connectors hold the brain, and its screen faces the person behind the robot. Each sensor has a fixed mount: switch it on or off, and choose its Smart Port.</p>
+          <div class="drive-pick">
+            <span>Drive layout</span>
+            <div class="segs" id="drive-segs">
+              <button class="seg" data-drive="fwd" title="Motors and tyres on the front axle, omni wheels at the rear">Front-wheel (FWD)</button>
+              <button class="seg" data-drive="rwd" title="Motors and tyres on the rear axle, omni wheels at the front">Rear-wheel (RWD)</button>
+            </div>
+          </div>
           <table class="dev-table" id="dev-table"></table>
           <div class="build-presets">
             <label>Load a lab setup <select id="preset"></select></label>

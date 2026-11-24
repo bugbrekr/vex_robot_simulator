@@ -57,7 +57,8 @@ export interface FrameMsg {
 
 // ---------------------------------------------------------------- IQ (2nd gen)
 export type IQ2Device = "left_motor" | "right_motor" | "distance" | "optical" | "bumper" | "touchled";
-export type IQ2Config = Record<IQ2Device, { port: number; enabled: boolean }>;
+export type IQ2Drive = "fwd" | "rwd";
+export type IQ2Config = Record<IQ2Device, { port: number; enabled: boolean }> & { drive?: IQ2Drive };
 
 export interface IQ2MotorSnapshot { pos: number; vel: number; cur: number; mode: string }
 export interface IQ2RobotSnapshot {

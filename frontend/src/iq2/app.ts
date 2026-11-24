@@ -152,7 +152,8 @@ export class App {
   }
 
   applyPreset(ex: ExampleInfo): void {
-    this.setConfig(presetConfig(ex.robot), true);
+    // a lab preset sets devices and ports; the drive layout is part of the build and stays
+    this.setConfig({ ...presetConfig(ex.robot), drive: this.config.drive }, true);
   }
 
   setMap(id: string): void {
