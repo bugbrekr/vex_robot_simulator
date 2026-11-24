@@ -105,6 +105,11 @@
           </div>
           <div class="sim-body">
             <div id="sim-view" class="viewport"></div>
+            <div class="wall-banner" id="wall-banner" hidden>
+              <span>⚠ The robot ran into the field wall.</span>
+              <button id="wall-home" class="btn-primary">Put it back at the start</button>
+              <button id="wall-dismiss" class="btn-link" title="Hide until it hits a wall again">Dismiss</button>
+            </div>
             <div class="sim-hint">Drag the robot to move it (mouse wheel while dragging rotates it). Click the <b>Touch LED</b> or <b>bumper</b> to press them.</div>
           </div>
         </div>

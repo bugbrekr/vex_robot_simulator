@@ -16,6 +16,9 @@ from vexsim.core.entity import Entity
 WHITE = "#f4f4f1"
 BLACK_TAPE = "#151515"
 TAPE_WIDTH = 19.0  # ESTIMATE: 3/4 in electrical tape
+WALL_HEIGHT = 75.0  # ESTIMATE: IQ field perimeter (~3 in)
+WALL_THICKNESS = 20.0
+WALL_COLOR = "#b8bcc0"
 
 
 def hex_rgb(color: str) -> tuple[int, int, int]:
@@ -157,7 +160,21 @@ class Field(Entity):
                 color=spec.get("color", "#c8102e"),
                 id=spec.get("id", f"obstacle_{i + 1}")))
         f.labels = list(sc.get("labels", []) or [])
+        if sc.get("walls", True):
+            f.add_walls(float(sc.get("wall_height", WALL_HEIGHT)))
         return f
+
+    def add_walls(self, height: float = 75.0) -> None:
+        """IQ-field-style perimeter walls just outside the mat, so a robot that goes astray
+        stops against them instead of driving off forever. Their ids start with ``wall_``."""
+        w, h = self.floor_size
+        t = WALL_THICKNESS
+        for wid, cx, cy, sx, sy in (("wall_n", 0, h / 2 + t / 2, w + 2 * t, t),
+                                    ("wall_s", 0, -h / 2 - t / 2, w + 2 * t, t),
+                                    ("wall_e", w / 2 + t / 2, 0, t, h),
+                                    ("wall_w", -w / 2 - t / 2, 0, t, h)):
+            self.obstacles.append(Obstacle(shape="box", center=(cx, cy), size=(sx, sy), height=height,
+                                           color=WALL_COLOR, id=wid))
 
     # -------------------------------------------------------------- queries
     def floor_color_at(self, x: float, y: float) -> str:

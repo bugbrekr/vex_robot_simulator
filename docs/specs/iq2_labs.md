@@ -42,6 +42,10 @@ Ports and thresholds differ between real robots and setups. The manual's values 
 
 ## Maps (ESTIMATE sizes, from the manual's figures; edit `backend/vexsim/scenarios/iq2/*.yaml`)
 
+Every map gets IQ-field-style perimeter walls just outside the mat: 75 mm high, 20 mm thick, ids `wall_n`, `wall_s`, `wall_e` and `wall_w`. Set `walls: false` in a map's YAML to turn them off.
+- A robot that goes astray stops against the wall. The Simulator then shows a banner with "Put it back at the start".
+- The walls are taller than the Distance sensor (62 mm), so it can see them.
+
 All maps use 19 mm black tape (ESTIMATE). World frame: +x east, +y north, mm. Starts face +y unless noted.
 
 | Map | Floor | Layout | Start |
@@ -51,4 +55,4 @@ All maps use 19 mm black tape (ESTIMATE). World frame: +x east, +y north, mm. St
 | `line_runner` | 0.6 × 1.9 m lane outlined in tape, inside a 1.2 × 2.4 m floor | lines at y = −300, 150 and 600 (450 mm apart), a grey start mark | (0, −800) |
 | `five_laps` | 2.4 m square | 508 mm (20 in, REAL) centre square | (−550, −550) |
 | | | four 300 × 100 × 200 mm obstacles placed so a robot on each 1100 mm side reads 200 mm and turns onto the next side | |
-| `lawn_mower` | 1.83 × 2.44 m mat with 75 mm perimeter walls | a 1.2 × 1.3 m yard outlined in tape | (−450, 520), facing east |
+| `lawn_mower` | 1.83 × 2.44 m mat | a 1.2 × 1.3 m yard outlined in tape | (−450, 520), facing east |

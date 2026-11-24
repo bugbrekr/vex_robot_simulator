@@ -102,10 +102,15 @@ def test_distance_sensor_sees_obstacle():
     assert size == "NONE"
 
 
-def test_distance_none_and_units():
-    s = run("from vex import *\nd = Distance(Ports.PORT5)\nprint(d.object_distance(MM), d.object_distance(INCHES))\n")
-    mm, inch = map(float, s["console"].split())
-    assert mm == 9999 and inch == pytest.approx(9999 / 25.4, abs=0.01)
+def test_distance_sees_the_wall_and_units():
+    code = "from vex import *\nd = Distance(Ports.PORT5)\nprint(d.object_distance(MM), d.object_distance(INCHES))\n"
+    mm, inch = map(float, run(code)["console"].split())
+    assert mm == pytest.approx(1200 - (-600) - 74, abs=1)  # the blank map's north wall
+    assert inch == pytest.approx(mm / 25.4, abs=0.01)
+    # without walls nothing is in range: 9999 mm
+    open_floor = {"name": "open", "floor": {"size": [2400, 2400]}, "walls": False, "start": {"x": 0, "y": 0, "yaw": 90}}
+    s = run(code, scenario=open_floor)
+    assert float(s["console"].split()[0]) == 9999
 
 
 def test_optical_brightness_white_black_and_led():
@@ -202,3 +207,10 @@ def test_preset_config_turns_unlisted_devices_off():
     cfg = preset_config({"left_motor": {"port": 6}, "right_motor": {"port": 1}, "optical": {"port": 7}})
     assert cfg["optical"] == {"port": 7, "enabled": True}
     assert not cfg["distance"]["enabled"] and not cfg["bumper"]["enabled"]
+
+
+def test_every_map_has_walls_that_stop_a_runaway_robot():
+    s = run(PLAIN + "dt.drive(FORWARD, 100, PERCENT)\nwait(20, SECONDS)\n", max_time=25)
+    assert s["robot"]["contacts"] == ["wall_n"]
+    assert s["robot"]["pose"][1] == pytest.approx(1200 - 85, abs=3)  # bumper face against the wall
+    assert not s["errors"]

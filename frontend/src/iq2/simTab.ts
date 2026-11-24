@@ -67,6 +67,14 @@ export class SimTab {
     if (this.app.scene) sel.value = this.app.scene.scenario.id;
   }
 
+  private wallDismissed = false;
+
+  /** Show the "ran into the wall" banner while the robot touches the perimeter. */
+  private wallBanner(touching: boolean): void {
+    if (!touching) this.wallDismissed = false; // re-arm once it's free again
+    $("wall-banner").hidden = !touching || this.wallDismissed;
+  }
+
   /** 3D view of the map, looking over the robot's start from behind and to its left. */
   private homeView(): void {
     const [x, y, yaw] = this.app.robotDesc?.start ?? [0, 0, 90];
@@ -83,6 +91,7 @@ export class SimTab {
     if (f.robot) {
       this.latest = f.robot;
       this.renderMonitor(f.robot);
+      this.wallBanner(f.robot.contacts.some((c) => c.startsWith("wall_")));
     }
     $("sim-pause").classList.toggle("on", f.paused);
   }
@@ -121,6 +130,11 @@ export class SimTab {
     real.checked = this.app.realistic;
     real.onchange = () => this.app.setRealistic(real.checked);
     $("robot-home").onclick = () => this.app.send({ type: "reset_robot" });
+    $("wall-home").onclick = () => {
+      if (this.app.runState === "running") this.app.stop();
+      this.app.send({ type: "reset_robot" });
+    };
+    $("wall-dismiss").onclick = () => { this.wallDismissed = true; $("wall-banner").hidden = true; };
     $("sim-reset").onclick = () => this.app.setMap(this.app.map);
     let paused = false;
     $("sim-pause").onclick = () => { paused = !paused; this.app.send({ type: "pause", value: paused }); };
