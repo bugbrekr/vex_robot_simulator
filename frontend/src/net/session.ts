@@ -11,13 +11,14 @@ export class SimSession {
   private retryMs = 1000;
   onClose: () => void = () => {};
 
-  constructor(private platform: string) {
+  /** `base` is the app root relative to the page ("" for the CTE page, "../" for iq2/). */
+  constructor(private platform: string, private base = "") {
     this.connect();
   }
 
   private connect(): void {
     // relative to the page, so the app works under any reverse-proxy prefix
-    const url = new URL(`ws/${this.platform}`, location.href);
+    const url = new URL(`${this.base}ws/${this.platform}`, location.href);
     url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(url);
     this.ws = ws;

@@ -1,0 +1,14 @@
+# Exp 8 - Line Runner Challenge. Lane size and line spacing are ESTIMATE (from the manual figure).
+name: Exp 8 - Line Runner
+description: A lane with three black lines ahead of the start box. The robot drives to line 1 and back, line 2 and back, line 3 and back.
+order: 3
+floor: {size: [1200, 2400]}
+start: {x: 0, y: -800, yaw: 90}
+lines:
+  - {points: [[-300, -950], [300, -950], [300, 950], [-300, 950]], closed: true}   # lane outline
+  - {points: [[-300, -600], [300, -600]], color: "#9aa0a6", width: 6}            # start box (grey, not a line to count)
+  - {points: [[-300, -300], [300, -300]]}                                        # line 1 (450 mm ahead of the sensor)
+  - {points: [[-300, 150], [300, 150]]}                                          # line 2
+  - {points: [[-300, 600], [300, 600]]}                                          # line 3
+labels:
+  - {text: START, at: [0, -760]}

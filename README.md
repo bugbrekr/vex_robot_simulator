@@ -3,7 +3,7 @@
 A browser-based simulator for VEX robots. Students write **VEXcode-compatible Python** (`from vex import *`), and it runs against a simulated robot.
 
 - **Phase 1 (current):** VEX CTE 6-Axis Arm on a CTE Tile, with the Signal Tower and 25 mm AprilTag cubes.
-- **Phase 2 (planned):** VEX IQ (2nd gen) robot.
+- **Phase 2:** VEX IQ (2nd gen) robot, a BaseBot-style front-wheel-drive build with Distance, Optical, Bumper and Touch LED sensors. It is at `/vex_cte/iq2/`, with Build, Code (a VS Code + VEX extension look-alike) and Simulator tabs, and the lab-manual programs (Exp 7–10).
 
 ## Quick start
 
@@ -36,7 +36,21 @@ The frontend uses only relative URLs, so nginx can put any prefix in front, for 
 
 > ⚠️ The simulator executes the Python that users type **on the server**. On a shared server, turn on the **Docker sandbox** (`vexsim serve --sandbox docker`). Each session's code then runs in its own throw-away container with no network, a read-only filesystem, no capabilities, an unprivileged user and CPU/memory/process limits. Use **rootless Docker** for that: see [docs/sandbox.md](docs/sandbox.md), which also covers `deploy/vexsim-user.service`. Restricting access in nginx (LAN only and/or `auth_basic`) is still a good idea.
 
-## What's simulated
+## VEX IQ (2nd gen): `/vex_cte/iq2/`
+
+| Tab | What it does |
+|---|---|
+| **Build** | Fixed chassis: front-wheel drive with 200 mm tyres on two Smart Motors and free omni wheels at the rear. Four L corner connectors hold the brain, whose screen faces the person behind the robot. Each sensor (Distance, Optical facing the floor, Bumper, Touch LED) can be switched on or off and moved to any Smart Port. Lab presets are included, plus the matching configuration code |
+| **Code** | VS Code-style editor with the VEX extension: New Project wizard (IQ 2nd gen, Python, templates), Explorer, a VEX view with Device Info, slots and Lab Programs, Slot Selector, Download, Play and Stop, plus Log, Interactive and Problems panels. Projects and slots are stored in the browser |
+| **Simulator** | Maps (blank, plus the Exp 7–10 courses), a clickable brain (Programs, Devices and Settings menus; Check, X, Left and Right buttons; 160×108 colour screen), and a live device monitor. Drag the robot to move it; click the Touch LED or bumper to press them. Sensors are realistic by default (seeded noise, drift, slip), with an ideal switch |
+
+The IQ2 Python API covers Motor, MotorGroup, DriveTrain, SmartDrive, Distance, Optical, Bumper, Touchled, Inertial and Brain (screen, buttons, battery, timer). See [docs/specs/iq2_api.md](docs/specs/iq2_api.md). Hardware numbers are in [docs/specs/iq2_hardware.md](docs/specs/iq2_hardware.md), and the lab programs and maps in [docs/specs/iq2_labs.md](docs/specs/iq2_labs.md).
+
+```bash
+uv run vexsim run backend/vexsim/examples/iq2/labs/exp09_five_laps.py --platform iq2 --scenario five_laps
+```
+
+## What's simulated (CTE)
 
 | Area | Status |
 |---|---|
@@ -68,7 +82,7 @@ backend/vexsim/
   core/        robot-agnostic engine: sim clock, fixed-step loop, world, transforms, config
   robots/      physical models (no VEX API knowledge)
     cte_arm/   geometry.yaml, kinematics, trajectory planner, ArmModel, magnet/pen, signal tower, tile, cubes
-    iq2/       (phase 2)
+    iq2/       IQ 2nd gen: geometry.yaml, motors, drive + collisions, sensors, brain screen, field
   api/         student-facing VEXcode facade, installed as the `vex` module
     common/    Brain, wait, Thread, Event, constants, runtime glue
     cte/       Arm, SignalTower

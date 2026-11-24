@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEX IQ Simulator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234d90f0'/%3E%3Crect x='7' y='9' width='18' height='12' rx='2' fill='white'/%3E%3Ccircle cx='10' cy='24' r='3' fill='white'/%3E%3Ccircle cx='22' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="iq2">
+    <header class="iq-appbar">
+      <div class="wordmark" title="VEX IQ (2nd gen) Simulator">VEX<span>sim</span><small>IQ 2nd gen</small></div>
+      <nav class="iq-tabs" id="iq-tabs">
+        <button data-tab="build"><span class="ico ico-sm" data-icon="build"></span>Build</button>
+        <button data-tab="code"><span class="ico ico-sm" data-icon="code"></span>Code</button>
+        <button data-tab="sim"><span class="ico ico-sm" data-icon="map"></span>Simulator</button>
+      </nav>
+      <div class="iq-appbar-right">
+        <span id="run-pill" class="run-pill">Idle</span>
+        <a class="iq-switch" href="../" title="Open the CTE 6-Axis Arm simulator">CTE Arm ↗</a>
+      </div>
+    </header>
+
+    <main class="iq-main">
+      <!-- ============================================================ BUILD -->
+      <section class="iq-pane" id="tab-build">
+        <div class="build-view" id="build-view"></div>
+        <aside class="build-side">
+          <h2>Robot build</h2>
+          <p class="muted">The chassis is a BaseBot-style frame with front-wheel drive. The tyre wheels are on the two motors at the front, and free omni wheels are at the rear. Four L corner connectors hold the brain, and its screen faces the person behind the robot. Each sensor has a fixed mount: switch it on or off, and choose its Smart Port.</p>
+          <table class="dev-table" id="dev-table"></table>
+          <div class="build-presets">
+            <label>Load a lab setup <select id="preset"></select></label>
+            <button id="preset-default" class="btn-light">All devices (lab ports)</button>
+          </div>
+          <h3>Configuration code <button id="copy-config" class="btn-link">Copy</button></h3>
+          <pre class="config-code" id="config-code"></pre>
+          <p class="muted small">VS Code projects have no device configuration screen. Declare the devices in <code>main.py</code> with the same ports.</p>
+        </aside>
+      </section>
+
+      <!-- ============================================================ CODE (VS Code look-alike) -->
+      <section class="iq-pane" id="tab-code">
+        <div class="vsc" id="vsc">
+          <div class="vsc-title">
+            <nav class="vsc-menubar" id="vsc-menubar"></nav>
+            <div class="vsc-title-text" id="vsc-title-text"></div>
+            <div></div>
+          </div>
+          <div class="vsc-body">
+            <div class="vsc-activity" id="vsc-activity">
+              <button data-view="explorer" title="Explorer"><span class="ico" data-icon="files"></span></button>
+              <button data-view="search" title="Search (not available)" disabled><span class="ico" data-icon="search"></span></button>
+              <button data-view="vex" title="VEX"><span class="ico" data-icon="vexchip"></span></button>
+            </div>
+            <div class="vsc-side" id="vsc-side"></div>
+            <div class="vsc-center">
+              <div class="vsc-tabs" id="vsc-tabs"></div>
+              <div class="vsc-crumbs" id="vsc-crumbs"></div>
+              <div class="vsc-editor" id="vsc-editor"></div>
+              <div class="vsc-welcome" id="vsc-welcome" hidden></div>
+              <div class="vsc-panel" id="vsc-panel">
+                <div class="vsc-panel-head">
+                  <button data-ptab="problems">PROBLEMS <span class="badge" id="vsc-problem-count" hidden>0</span></button>
+                  <button data-ptab="terminal" class="on">TERMINAL</button>
+                  <span class="grow"></span>
+                  <select id="vsc-term-select">
+                    <option value="log">1: Log Terminal</option>
+                    <option value="user">2: Interactive Terminal</option>
+                  </select>
+                  <button id="vsc-term-clear" title="Clear terminal">⌫</button>
+                </div>
+                <pre class="vsc-term" id="vsc-term-log"></pre>
+                <pre class="vsc-term" id="vsc-term-user" hidden></pre>
+                <div class="vsc-problems" id="vsc-problems" hidden></div>
+              </div>
+            </div>
+          </div>
+          <div class="vsc-status" id="vsc-status"></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ SIMULATOR -->
+      <section class="iq-pane" id="tab-sim">
+        <div class="sim-main">
+          <div class="tabbar sim-bar">
+            <label class="sim-ctl"><span class="lbl">Map</span> <select id="map"></select></label>
+            <label class="sim-ctl"><span class="lbl">Speed</span>
+              <select id="speed">
+                <option value="0.25">0.25×</option><option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option><option value="2">2×</option>
+                <option value="4">4×</option><option value="0">Max</option>
+              </select>
+            </label>
+            <label class="sim-ctl" title="Realistic: sensor noise, gyro drift, wheel slip and turn overshoot. Ideal: exact readings (repeatable)."><input type="checkbox" id="realistic" /> Realistic sensors</label>
+            <span class="grow"></span>
+            <button id="robot-home" class="icon-btn" title="Put the robot back at the map's start"><span class="ico" data-icon="home"></span></button>
+            <button id="sim-pause" class="icon-btn" title="Pause / resume the simulation"><span class="ico" data-icon="pause"></span></button>
+            <button id="sim-reset" class="icon-btn" title="Reset simulation (reload map)"><span class="ico" data-icon="reset"></span></button>
+            <span class="tb-sep dark"></span>
+            <button id="view-3d" class="icon-btn" title="3D view"><span class="ico" data-icon="camera3d"></span></button>
+            <button id="view-top" class="icon-btn" title="Top view"><span class="ico" data-icon="cameraTop"></span></button>
+            <button id="view-follow" class="icon-btn" title="Follow the robot from behind (read its screen)"><span class="ico" data-icon="follow"></span></button>
+          </div>
+          <div class="sim-body">
+            <div id="sim-view" class="viewport"></div>
+            <div class="sim-hint">Drag the robot to move it (mouse wheel while dragging rotates it). Click the <b>Touch LED</b> or <b>bumper</b> to press them.</div>
+          </div>
+        </div>
+        <aside class="sim-side">
+          <div class="brain-face" id="brain-face">
+            <div class="bf-ports top"><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div>
+            <div class="bf-row">
+              <div class="bf-btns left">
+                <button data-btn="x" title="X: stop / back (Backspace)">✕</button>
+                <button data-btn="check" title="Check: select (Enter)">✓</button>
+              </div>
+              <div class="bf-screen" id="bf-screen"></div>
+              <div class="bf-btns right">
+                <button data-btn="left" title="Left (←)">◀</button>
+                <button data-btn="right" title="Right (→)">▶</button>
+              </div>
+            </div>
+            <div class="bf-ports"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+          </div>
+          <div class="side-card">
+            <div class="side-head">Devices</div>
+            <table class="monitor" id="monitor"></table>
+          </div>
+          <div class="side-card grow-card">
+            <div class="side-head">Print Console <button id="sim-console-clear" class="icon-btn small" title="Clear"><span class="ico ico-sm" data-icon="trash"></span></button></div>
+            <pre class="console" id="sim-console"></pre>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog class="vsc-dialog" id="vsc-dialog"></dialog>
+    <script type="module" src="../src/iq2/main.ts"></script>
+  </body>
+</html>

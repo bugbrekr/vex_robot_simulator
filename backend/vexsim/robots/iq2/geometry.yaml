@@ -1,0 +1,93 @@
+# VEX IQ (2nd gen) BaseBot-style robot, front-wheel drive. Lengths in mm, angles in degrees.
+# Tags: REAL (official VEX), LAB (from the lab manual's VEXcode config), ESTIMATE (guess - tune freely).
+# See docs/specs/iq2_hardware.md for sources.
+#
+# Robot frame: origin = centre of the drive (front) axle, on the floor. +x forward, +y left, +z up.
+# The robot pose (x, y, theta) is this point; a differential drive turns about it.
+
+pitch: 12.7                      # REAL  IQ hole spacing (0.5 in)
+
+drive:
+  wheel_travel: 200.0            # REAL  200 mm travel tyre: one revolution = 200 mm
+  track_width: 173.0             # LAB   VEXcode drivetrain config used in the lab (DriveTrain(..., 200, 173, 76, MM))
+  wheel_base: 127.0              # ESTIMATE  drive axle -> omni axle (10 pitch); LAB config says 76, unused by the API
+  wheel_width: 21.0              # ESTIMATE
+  omni_width: 25.0               # ESTIMATE
+  omni_rollers: 10               # ESTIMATE  rollers per ring (two staggered rings)
+
+motor:
+  free_rpm: 120.0                # REAL  IQ Smart Motor free speed (1:1)
+  stall_torque: 0.414            # REAL  N*m
+  max_current: 1.2               # REAL  A (API range 0-1.2)
+  accel_rpm_s: 800.0             # ESTIMATE  spin-up rate under the robot's load
+  brake_rpm_s: 2400.0            # ESTIMATE  BRAKE / HOLD deceleration
+  coast_rpm_s: 300.0             # ESTIMATE  COAST deceleration
+  size: [50.0, 25.0, 50.0]       # ESTIMATE  x, y, z body (visual)
+
+# Collision footprint (robot frame): front = bumper face, rear = rear crossbar
+footprint: {front: 85.0, rear: -165.0, half_width: 97.0}   # ESTIMATE
+
+# Visual parts (robot frame). Boxes are [cx, cy, cz, sx, sy, sz].
+brain:
+  center: [-63.0, 0.0, 78.0]     # ESTIMATE
+  size: [86.0, 111.0, 33.0]      # ESTIMATE  long edge across the robot; the screen's "up" points forward,
+                                 #           so it reads upright for someone standing behind the robot
+  screen_size: [58.0, 39.0]      # ESTIMATE  160x108 px panel (REAL resolution)
+battery:
+  center: [-63.0, 0.0, 49.0]     # ESTIMATE  under the brain
+  size: [50.0, 79.0, 25.0]       # ESTIMATE
+rails:                           # side beams the wheels hang on (ESTIMATE)
+  - [-52.0, 66.0, 32.0, 230.0, 6.4, 25.4]
+  - [-52.0, -66.0, 32.0, 230.0, 6.4, 25.4]
+crossbars:                       # ESTIMATE
+  - [62.0, 0.0, 32.0, 6.4, 126.0, 25.4]     # front, carries bumper + distance sensor
+  - [-160.0, 0.0, 32.0, 6.4, 126.0, 25.4]   # rear, carries the Touch LED
+corner_connectors:               # L brackets: brain long edge corners -> rails, blue pins (ESTIMATE)
+  - [-17.0, 47.0]
+  - [-17.0, -47.0]
+  - [-109.0, 47.0]
+  - [-109.0, -47.0]
+
+# Sensor mounts (fixed). pos = sensing point, dir = sensing direction (robot frame).
+mounts:
+  distance: {pos: [74.0, 0.0, 62.0], dir: [1, 0, 0], size: [16.0, 38.0, 26.0]}    # ESTIMATE front, facing forward
+  optical:  {pos: [50.0, 0.0, 10.0], dir: [0, 0, -1], size: [26.0, 26.0, 16.0]}   # ESTIMATE front underside, facing down
+  bumper:   {pos: [85.0, 0.0, 30.0], dir: [1, 0, 0], size: [20.0, 38.0, 25.0]}    # ESTIMATE front face (contact plate)
+  touchled: {pos: [-160.0, 0.0, 62.0], dir: [0, 0, 1], size: [25.0, 25.0, 20.0]}  # ESTIMATE top rear
+
+sensors:
+  distance:
+    min_range: 20.0              # REAL
+    max_range: 2000.0            # REAL
+    detect_range: 1000.0         # REAL  (KB: "found" when about < 1000 mm)
+    no_object: 9999.0            # ESTIMATE  reading with nothing in range (V5 behaviour)
+    near_error: 15.0             # REAL  +/- below 200 mm
+    far_error_pct: 5.0           # REAL  above 200 mm
+    beam_half_angle: 6.0         # ESTIMATE  "very narrow field of view"
+    size_small: 60.0             # ESTIMATE  visible width thresholds (mm) for SMALL / MEDIUM / LARGE
+    size_medium: 150.0
+  optical:
+    spot_radius: 6.0             # ESTIMATE  floor patch the sensor averages
+    ambient: 0.35                # ESTIMATE  brightness fraction without the LED
+    white_reflectance: 0.95      # ESTIMATE  -> ~95 % with the LED on (manual: white >= 80)
+    black_reflectance: 0.08      # ESTIMATE  -> ~8 % (manual: black < 40)
+    noise: 1.5                   # ESTIMATE  % brightness, realistic mode
+  inertial:
+    calibrate_time: 2.0          # ESTIMATE  s
+    drift_dps: 0.01              # ESTIMATE  realistic mode
+    noise_deg: 0.05              # ESTIMATE
+  touchled:
+    blink_default: 0.25          # REAL  s on / off
+
+realism:
+  turn_gain: 1.06                # MEASURED-ish (user): DriveTrain turn_for(85) turns ~90 on the lab robots
+  wheel_scale_spread: 0.004      # ESTIMATE  per-wheel travel error (+/-): straight driving is unguided
+                                 #           (even with SmartDrive) and curves up to ~2.7 deg per metre
+
+default_ports:                   # LAB  ports used by most lab programs
+  left_motor: 6
+  right_motor: 1
+  distance: 5
+  optical: 3
+  bumper: 11
+  touchled: 4

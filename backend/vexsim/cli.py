@@ -32,6 +32,11 @@ def _run(args) -> int:
         arm = summary.get("arm")
         if arm:
             print(f"arm tcp={arm['tcp']} rpy={arm['rpy']} tool={arm['tool']} holding={arm['holding']}")
+        robot = summary.get("robot")
+        if robot:
+            print(f"robot pose={robot['pose']} heading={robot['heading']}")
+            for row in summary.get("screen") or []:
+                print(f"screen | {row}")
         for o in summary["objects"]:
             print(f"{o['id']}: pos={o['pos']}")
     return 1 if summary["errors"] else 0

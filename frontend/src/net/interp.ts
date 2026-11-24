@@ -1,4 +1,4 @@
-import type { ArmSnapshot, FrameMsg, ObjectSnapshot, Quat, Vec3 } from "./protocol";
+import type { ArmSnapshot, FrameMsg, IQ2RobotSnapshot, ObjectSnapshot, Quat, Vec3 } from "./protocol";
 
 /**
  * Smooth playback of server frames.
@@ -104,9 +104,21 @@ function lerpObjects(a: ObjectSnapshot[], b: ObjectSnapshot[], s: number): Objec
   });
 }
 
+function lerpRobot(a: IQ2RobotSnapshot, b: IQ2RobotSnapshot, s: number): IQ2RobotSnapshot {
+  let dyaw = b.pose[2] - a.pose[2];
+  dyaw -= 360 * Math.round(dyaw / 360);
+  return {
+    ...b,
+    pose: [lerp(a.pose[0], b.pose[0], s), lerp(a.pose[1], b.pose[1], s), a.pose[2] + dyaw * s],
+    wheels: { left_motor: lerp(a.wheels.left_motor, b.wheels.left_motor, s), right_motor: lerp(a.wheels.right_motor, b.wheels.right_motor, s) },
+    omni: lerp(a.omni, b.omni, s),
+  };
+}
+
 function lerpFrame(a: FrameMsg, b: FrameMsg, s: number): FrameMsg {
   return {
     ...b,
+    robot: a.robot && b.robot ? lerpRobot(a.robot, b.robot, s) : b.robot,
     t: lerp(a.t, b.t, s),
     arm: a.arm && b.arm ? lerpArm(a.arm, b.arm, s) : b.arm,
     world: a.world && b.world ? { objects: lerpObjects(a.world.objects, b.world.objects, s) } : b.world,

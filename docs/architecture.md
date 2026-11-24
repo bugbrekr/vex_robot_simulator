@@ -44,7 +44,25 @@ JSON lines. See `backend/vexsim/runner/protocol.py`, mirrored in `frontend/src/n
 - **XYZ moves** hold the current world orientation.
 - **Unreachable targets** return False and print a sim warning. Reachability is checked with joint limits, the floor, and the base keep-out zones.
 
-## Adding a robot (for example IQ2)
+## IQ (2nd gen)
+- **Robot model:** `robots/iq2/`.
+  - `IQRobotModel`: the differential drive (front motors, rear omnis), collisions against field obstacles, and every sensor.
+  - `BrainModel`: the screen, kept as a display list of drawing ops.
+  - `Field`: the floor, tape lines and obstacles.
+  - All dimensions are in `geometry.yaml`.
+- **Port binding:** the API (`api/iq2/`) binds `Motor(Ports.PORT6)` and similar calls to whatever device the Build tab's config puts on that port.
+  - Config message: `robot_config`, which sets each device's enabled flag and port.
+- **Closed-loop SmartDrive moves:** these run as *controllers* that the robot model steps on the engine thread (`robot.add_controller`).
+- **Frames:** each frame carries `robot` (pose, wheels, sensor readings) and `brain` (buttons, battery, and the screen ops added since the last frame).
+- **Other commands:** `brain_button`, `touch`, `bumper`, `place_robot`, `reset_robot` and `realism`.
+- **Frontend:** a second Vite page, `frontend/iq2/index.html`, served at `<base>/iq2/`. Same server and WebSocket path (`ws/iq2`), so deployment is unchanged. It has three tabs:
+  - Build (`buildTab.ts`)
+  - Code: a VS Code look-alike (`codeTab.ts`)
+  - Simulator (`simTab.ts`)
+
+  The brain's own menus (`brainOS.ts`) and the brain slots run in the browser. A slot's code is sent to the worker with `run`.
+
+## Adding a robot
 1. Add `robots/iq2/` with `Entity` models (drivetrain, motors, sensors) and a `scene.py` `build_scene()`.
 2. Add `api/iq2/` with VEXcode classes that reuse `api/common` (Brain, wait, Thread, Event).
 3. Register the platform in `runner/worker.py::build_platform`, and add scenarios under `scenarios/iq2/`.

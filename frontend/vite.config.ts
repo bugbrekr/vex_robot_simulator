@@ -22,7 +22,11 @@ export default defineConfig(({ command }) => ({
   base: command === "build" ? "./" : "/vex_cte/",
   define: { __BUILD_ID__: JSON.stringify(command === "build" ? BUILD_ID : "dev") },
   plugins: [buildInfo],
-  build: { chunkSizeWarningLimit: 1500 },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    // two pages: the CTE arm (index.html) and VEX IQ 2nd gen (iq2/index.html)
+    rollupOptions: { input: { main: resolve(__dirname, "index.html"), iq2: resolve(__dirname, "iq2/index.html") } },
+  },
   server: {
     port: 5173,
     proxy: {

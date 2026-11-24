@@ -1,0 +1,16 @@
+# Exp 10 - Robo Lawn Mower (not in the exam). Yard size is ESTIMATE (from the manual figure);
+# the mat has IQ-style perimeter walls so a robot that misses a line stops at the wall.
+# Open question (docs/specs/iq2_labs.md): with a plain rectangle the program, as written, is outside
+# the yard after its first turn and can't reach the next line - waiting on the real field layout.
+name: Exp 10 - Lawn Mower
+description: A rectangular yard outlined in black tape on a walled mat. The robot follows the boundary, turning at each line.
+order: 5
+floor: {size: [1830, 2440]}
+start: {x: -450, y: 520, yaw: 0}
+lines:
+  - {points: [[-600, -650], [600, -650], [600, 650], [-600, 650]], closed: true}
+obstacles:
+  - {id: wall_n, shape: box, center: [0, 1230], size: [1870, 20], height: 75, color: "#b8bcc0"}
+  - {id: wall_s, shape: box, center: [0, -1230], size: [1870, 20], height: 75, color: "#b8bcc0"}
+  - {id: wall_e, shape: box, center: [925, 0], size: [20, 2440], height: 75, color: "#b8bcc0"}
+  - {id: wall_w, shape: box, center: [-925, 0], size: [20, 2440], height: 75, color: "#b8bcc0"}

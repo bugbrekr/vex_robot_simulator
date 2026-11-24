@@ -23,3 +23,18 @@
 
 ## IDE / Teach Pendant / whiteboard
 - See docs/specs/teach_pendant_and_ide.md (KB Teach Pendant guide, STEM Labs Unit 1 L4 + Unit 4 L1 screenshots).
+
+## VEX IQ (2nd gen)
+- Python API: https://api.vex.com/iq2/home/python/ — Motion/Motor, Drivetrain, Inertial, Screen, Sensing/{Brain,Distance,TouchLED,Bumper,Optical}, Logic/{Timer,Threads,Events,Color_objects}
+- Distance sensor (2nd gen): https://kb.vex.com/hc/en-us/articles/4407296307348-Using-the-IQ-Distance-Sensor-2nd-gen
+- Wheels: https://kb.vex.com/hc/en-us/articles/360035955171-Understanding-VEX-IQ-Wheels
+- 1st vs 2nd gen: https://kb.vex.com/hc/en-us/articles/7267344764308-Understanding-IQ-1st-Generation-vs-2nd-Generation
+- Smart Motor performance: https://kb.vex.com/hc/en-us/articles/18113746616724-Understanding-IQ-Smart-Motor-Performance
+- Brain Devices screen: https://kb.vex.com/hc/en-us/articles/4407061189908
+- BaseBot render (layout reference): https://kb.vex.com/hc/article_attachments/4463801454996
+- VS Code extension: https://marketplace.visualstudio.com/items?itemName=VEXRobotics.vexcode ;
+  UI overview (IQ) https://kb.vex.com/hc/en-us/articles/8604273158164 ; New Project (IQ)
+  https://kb.vex.com/hc/en-us/articles/8604236587028 ; project files (AIR)
+  https://kb.vex.com/hc/en-us/articles/39233320977812
+- Lab manual pages and code: `docs/research/Document 23.pdf`, `docs/research/VEX_IQ_Example_Codes_crude.txt` (user-supplied)
+- Access note: vexrobotics.com product pages return 403 to automated fetches.

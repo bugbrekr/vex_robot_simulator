@@ -1,0 +1,11 @@
+# Exp 7 - Sensor Bed. Sizes are ESTIMATE (the manual has no figure).
+name: Exp 7 - Sensor Bed
+description: A black line across the robot's path and a block beyond it. Click the robot's bumper or Touch LED to trigger them.
+order: 2
+floor: {size: [1830, 1830]}
+start: {x: 0, y: -600, yaw: 90}
+lines:
+  - {points: [[-500, 0], [500, 0]]}
+obstacles:
+  - {id: block, shape: box, center: [700, 40], size: [100, 300], height: 150, color: "#c8102e"}
+  - {id: can, shape: cylinder, center: [-450, 500], radius: 45, height: 120, color: "#0072ce"}

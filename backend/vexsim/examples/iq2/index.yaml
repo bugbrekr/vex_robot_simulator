@@ -1,0 +1,17 @@
+# IQ2 example projects. `map` is the scenario the example is meant for; `robot` is the device
+# preset the Build tab applies (devices left out are switched OFF); `group` sorts the menu.
+- {id: drive_square, title: Drive a square, file: drive_square.py, map: blank, group: Examples,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}}}
+- {id: touchled_buttons, title: Touch LED and brain buttons, file: touchled_buttons.py, map: blank, group: Examples,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, touchled: {port: 4}}}
+- {id: line_follow, title: Follow a line edge, file: line_follow.py, map: line_runner, group: Examples,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 3}}}
+
+- {id: exp07_sensor_bed, title: "Exp 7: Sensor Bed", file: labs/exp07_sensor_bed.py, map: sensor_bed, group: Lab Programs, exam: true,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, bumper: {port: 11}, distance: {port: 5}, optical: {port: 3}, touchled: {port: 4}}}
+- {id: exp08_line_runner, title: "Exp 8: Line Runner Challenge", file: labs/exp08_line_runner.py, map: line_runner, group: Lab Programs, exam: true,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 7}}}
+- {id: exp09_five_laps, title: "Exp 9: Five Laps Using Sonic Sensor", file: labs/exp09_five_laps.py, map: five_laps, group: Lab Programs, exam: true,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, distance: {port: 5}}}
+- {id: exp10_lawn_mower, title: "Exp 10: Robo Lawn Mower", file: labs/exp10_lawn_mower.py, map: lawn_mower, group: Lab Programs, exam: false,
+   robot: {left_motor: {port: 6}, right_motor: {port: 1}, optical: {port: 3}}}

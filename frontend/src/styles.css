@@ -383,3 +383,6 @@ code, kbd, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, m
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 .reload-banner button { margin-left: 10px; border: none; border-radius: 6px; padding: 3px 10px; background: #4d90f0; color: #fff; font-weight: 700; }
+
+.app-switch { color: #fff; font-size: 12.5px; font-weight: 600; text-decoration: none; opacity: 0.9; margin-right: 10px; white-space: nowrap; }
+.app-switch:hover { text-decoration: underline; }

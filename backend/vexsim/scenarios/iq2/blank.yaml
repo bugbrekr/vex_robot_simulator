@@ -1,0 +1,5 @@
+name: Blank mat
+description: A plain white floor. Drag the robot anywhere and try your own programs.
+order: 1
+floor: {size: [2400, 2400]}
+start: {x: 0, y: -600, yaw: 90}

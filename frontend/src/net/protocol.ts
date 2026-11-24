@@ -51,7 +51,62 @@ export interface FrameMsg {
   arm?: ArmSnapshot;
   signal_tower?: TowerSnapshot;
   world?: { objects: ObjectSnapshot[] };
+  robot?: IQ2RobotSnapshot;
+  brain?: IQ2BrainSnapshot;
 }
+
+// ---------------------------------------------------------------- IQ (2nd gen)
+export type IQ2Device = "left_motor" | "right_motor" | "distance" | "optical" | "bumper" | "touchled";
+export type IQ2Config = Record<IQ2Device, { port: number; enabled: boolean }>;
+
+export interface IQ2MotorSnapshot { pos: number; vel: number; cur: number; mode: string }
+export interface IQ2RobotSnapshot {
+  pose: [number, number, number]; // x, y (mm), yaw (deg, CCW from +x)
+  wheels: Record<"left_motor" | "right_motor", number>; // wheel angle (deg, + = rolling forward)
+  omni: number;
+  motors: Record<"left_motor" | "right_motor", IQ2MotorSnapshot>;
+  heading: number;
+  rotation: number;
+  distance: number;
+  distance_hit: boolean;
+  optical: { brightness: number; hue: number; led: number; near: boolean };
+  bumper: boolean;
+  touchled: { color: string | null; pressed: boolean; brightness: number };
+  contacts: string[];
+  config: IQ2Config;
+}
+
+/** Brain screen drawing op (see backend/vexsim/robots/iq2/brain.py). */
+export interface ScreenOp {
+  o: "clr" | "t" | "r" | "c" | "l" | "p" | "clip";
+  x?: number; y?: number; x2?: number; y2?: number; w?: number; h?: number; r?: number;
+  s?: string; f?: string; c?: string; b?: string | null; bl?: number;
+  pc?: string | null; fc?: string | null; pw?: number;
+}
+export interface IQ2BrainSnapshot { buttons: Record<"check" | "left" | "right", boolean>; screen: ScreenOp[]; battery: number }
+
+export interface IQ2Line { points: [number, number][]; width: number; color: string; closed: boolean }
+export interface IQ2Obstacle {
+  id: string; shape: "box" | "cylinder"; center: [number, number]; height: number; yaw: number; color: string;
+  size?: [number, number]; radius?: number;
+}
+export interface IQ2FieldDesc {
+  name: string; kind: "iq2_field";
+  floor: { size: [number, number]; color: string };
+  lines: IQ2Line[]; obstacles: IQ2Obstacle[]; labels: { text: string; at: [number, number] }[];
+}
+export type Box6 = [number, number, number, number, number, number];
+export interface IQ2Geometry {
+  pitch: number;
+  drive: { wheel_travel: number; track_width: number; wheel_base: number; wheel_width: number; omni_width: number; omni_rollers: number };
+  motor: { size: Vec3 };
+  footprint: { front: number; rear: number; half_width: number };
+  brain: { center: Vec3; size: Vec3; screen_size: [number, number] };
+  battery: { center: Vec3; size: Vec3 };
+  rails: Box6[]; crossbars: Box6[]; corner_connectors: [number, number][];
+  mounts: Record<"distance" | "optical" | "bumper" | "touchled", { pos: Vec3; dir: Vec3; size: Vec3 }>;
+}
+export interface IQ2RobotDesc { name: string; kind: "iq2_robot"; geometry: IQ2Geometry; start: [number, number, number]; config: IQ2Config }
 
 export interface CubeDesc { id: string; kind: "cube"; size: number; color: string; tag_id: number; tag_face: string }
 
@@ -70,7 +125,7 @@ export interface ArmDesc {
 
 export interface TowerDesc { name: string; kind: "signal_tower"; position: [number, number]; colors: string[] }
 export interface WorldDesc { name: string; kind: "world"; objects: CubeDesc[] }
-export type EntityDesc = ArmDesc | TowerDesc | WorldDesc;
+export type EntityDesc = ArmDesc | TowerDesc | WorldDesc | IQ2FieldDesc | IQ2RobotDesc | { name: string; kind: "iq2_brain" };
 
 export interface Scene {
   platform: string;
@@ -82,6 +137,12 @@ export interface Scene {
     surface: "tile" | "whiteboard";
     whiteboard: { outline: [number, number][]; screws: [number, number][] } | null;
   };
+  entities: EntityDesc[];
+}
+
+export interface IQ2Scene {
+  platform: "iq2";
+  scenario: { id: string; name: string; description: string };
   entities: EntityDesc[];
 }
 
@@ -118,4 +179,10 @@ export type ClientMsg =
   | { type: "remove_object"; id: string }
   | { type: "clear_objects" }
   | { type: "sim_home" }
-  | { type: "marker"; protrusion: number };
+  | { type: "marker"; protrusion: number }
+  | { type: "brain_button"; name: "check" | "left" | "right"; pressed: boolean }
+  | { type: "touch"; pressed: boolean }
+  | { type: "place_robot"; x: number; y: number; yaw: number }
+  | { type: "reset_robot" }
+  | { type: "robot_config"; config: IQ2Config }
+  | { type: "realism"; on: boolean };

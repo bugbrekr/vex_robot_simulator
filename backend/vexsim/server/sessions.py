@@ -14,6 +14,7 @@ from vexsim.server.sandbox import SandboxConfig, setup_problem
 
 # Everything except "reset" (new scene = new worker process) goes to the persistent worker.
 LOCAL = {"reset"}
+DEFAULT_SCENARIO = {"cte": "cte_tile", "iq2": "blank"}
 
 
 class Session:
@@ -26,7 +27,7 @@ class Session:
         self.container: str | None = None
         self._tasks: list[asyncio.Task] = []
         self.speed = 1.0
-        self.scenario = "cte_tile"
+        self.scenario = DEFAULT_SCENARIO.get(platform, "cte_tile")
 
     async def start(self, scenario: str, code: str | None = None, tool: str | None = None,
                     marker: float | None = None) -> None:
@@ -83,7 +84,7 @@ class Session:
     async def command(self, msg: dict) -> None:
         kind = msg.get("type")
         if kind == "reset":
-            self.scenario = msg.get("scenario", "cte_tile")
+            self.scenario = msg.get("scenario", DEFAULT_SCENARIO.get(self.platform, "cte_tile"))
             # keep the physically mounted tool across map changes / resets
             await self.start(self.scenario, None, msg.get("mounted_tool"), msg.get("marker_protrusion"))
             return

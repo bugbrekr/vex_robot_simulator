@@ -37,6 +37,7 @@ FRAME_HZ = max(5.0, min(120.0, float(os.environ.get("VEXSIM_FRAME_HZ", "30"))))
 FRAME_INTERVAL = 1 / FRAME_HZ  # wall seconds between frames sent to the UI
 FRAME_SLACK = 0.004  # emit a step early rather than a whole 10 ms step late (steady cadence)
 PENDANT_CMDS = ("jog", "tool", "safe", "manual", "drag", "drag_end")
+IQ2_CMDS = ("brain_button", "touch", "place_robot", "reset_robot", "robot_config", "realism")
 OBJECT_CMDS = ("add_object", "grab_object", "move_object", "drop_object", "remove_object",
                "clear_objects")
 
@@ -51,6 +52,19 @@ def build_platform(platform: str, engine: SimEngine, scenario: dict) -> tuple[di
             "platform": "cte",
             "scenario": {k: scenario.get(k) for k in ("id", "name", "description")},
             "tile": describe_tile(scenario),
+            "entities": [e.describe() for e in engine.entities],
+        }
+        return devices, scene
+    if platform == "iq2":
+        from vexsim.robots.iq2.scene import build_scene as build_iq2
+
+        opts = scenario.get("_iq2", {})
+        devices = build_iq2(engine, scenario, config=opts.get("config"),
+                            realistic=opts.get("realistic", True), seed=opts.get("seed", 1),
+                            pose=opts.get("pose"))
+        scene = {
+            "platform": "iq2",
+            "scenario": {k: scenario.get(k) for k in ("id", "name", "description")},
             "entities": [e.describe() for e in engine.entities],
         }
         return devices, scene
@@ -91,6 +105,10 @@ class Worker:
         max_time: float | None = None,
         mounted_tool: str | None = None,
         marker_protrusion: float | None = None,
+        robot_config: dict | None = None,
+        realistic: bool | None = None,
+        seed: int = 1,
+        pose: list | None = None,
     ):
         self.platform = platform
         self.scenario = load_scenario(platform, scenario) if isinstance(scenario, str) else scenario
@@ -99,6 +117,11 @@ class Worker:
             self.scenario = {**self.scenario, "arm": {**(self.scenario.get("arm") or {}),
                                                       "mounted_tool": mounted_tool,
                                                       "marker_protrusion": marker_protrusion}}
+        if platform == "iq2":
+            self.scenario = {**self.scenario, "_iq2": {
+                "config": robot_config, "seed": seed, "pose": pose,
+                # interactive sessions are realistic by default; headless runs/tests are ideal
+                "realistic": (interactive if realistic is None else realistic)}}
         self.code = code
         self.speed = speed
         self.emit = emit or (lambda msg: None)
@@ -170,6 +193,11 @@ class Worker:
         sys.modules["vex"] = api
         if self.platform == "cte":
             sys.modules["cte"] = api  # codeexp.vex.com projects use `from cte import *`
+        if self.platform == "iq2":
+            from vexsim.api.iq2 import urandom
+
+            urandom.seed(0)
+            sys.modules["urandom"] = urandom
         rt_mod.install(self.rt)
         self._run_deadline = None if self.max_time is None else self.engine.t + self.max_time
         try:
@@ -205,6 +233,9 @@ class Worker:
     def _program_done(self) -> bool:
         if self.phase == "homing":
             return False
+        if self.platform == "iq2":  # the project ends when its code does (motors then stop)
+            return (self.rt.live_threads() == 0 and not self.engine.has_timers()
+                    and (self.rt.callbacks_registered == 0 or not self.interactive))
         arm = self.devices.get("arm")
         moving = arm is not None and arm.is_moving()
         world = self.devices.get("world")
@@ -226,6 +257,9 @@ class Worker:
             arm = self.devices.get("arm")
             if arm is not None:
                 arm.abort_move()
+            robot = self.devices.get("robot")
+            if robot is not None:
+                robot.stop_motors()
         if not quiet:
             self._set_state("stopped")
 
@@ -248,11 +282,17 @@ class Worker:
             if tower is not None:
                 with self.engine.lock:
                     tower.set_bumper(bool(cmd.get("pressed")))
+            robot = self.devices.get("robot")
+            if robot is not None:
+                with self.engine.lock:
+                    robot.bumper_ui = bool(cmd.get("pressed"))
         elif kind == "erase":
             arm = self.devices.get("arm")
             if arm is not None:
                 with self.engine.lock:
                     arm.pen.erase()
+        elif kind in IQ2_CMDS:
+            self._iq2(cmd)
         elif kind in OBJECT_CMDS:  # cubes can be manipulated at any time
             self._objects(cmd)
         elif kind == "sim_home":  # simulator-only: teleport the arm to the safe position
@@ -268,6 +308,31 @@ class Worker:
                 return
             if self.state != "running":
                 self._pendant(cmd)
+
+    def _iq2(self, cmd: dict) -> None:
+        robot = self.devices.get("robot")
+        brain = self.devices.get("brain")
+        if robot is None:
+            return
+        kind = cmd["type"]
+        with self.engine.lock:
+            if kind == "brain_button" and brain is not None:
+                brain.set_button(str(cmd.get("name")), bool(cmd.get("pressed")))
+            elif kind == "touch":
+                robot.touchled.ui_pressed = bool(cmd.get("pressed"))
+            elif kind == "place_robot":
+                import math
+
+                robot.place(float(cmd["x"]), float(cmd["y"]), math.radians(float(cmd.get("yaw", 90.0))))
+            elif kind == "reset_robot":
+                robot.reset_pose()
+            elif kind == "robot_config":
+                if self.state == "running":
+                    self._warn("Stop the project before changing the robot's devices")
+                    return
+                robot.set_config(cmd.get("config") or {})
+            elif kind == "realism":
+                robot.set_realistic(bool(cmd.get("on", True)))
 
     def _sim_home(self) -> None:
         arm = self.devices.get("arm")
@@ -399,7 +464,7 @@ class Worker:
             msg: dict[str, Any] = {"type": "frame", "t": round(self.engine.t, 3),
                                    "state": self.state, "phase": self.phase,
                                    "paused": self.paused}
-            for key in ("arm", "signal_tower", "world"):
+            for key in ("arm", "signal_tower", "world", "robot", "brain"):
                 dev = self.devices.get(key)
                 if dev is not None:
                     msg[key] = dev.snapshot()
@@ -416,6 +481,10 @@ class Worker:
             if arm is None or not arm.is_moving():
                 self._launch()
         if self.state == "running" and self._program_done():
+            robot = self.devices.get("robot")
+            if robot is not None:
+                with self.engine.lock:
+                    robot.stop_motors()
             self._set_state("finished")
         if self._run_deadline is not None and self.engine.t >= self._run_deadline:
             if self.state == "running":
@@ -473,6 +542,8 @@ class Worker:
             "arm": final.get("arm"),
             "objects": (final.get("world") or {}).get("objects", []),
             "signal_tower": final.get("signal_tower"),
+            "robot": final.get("robot"),
+            "screen": self.devices["brain"].text_rows() if "brain" in self.devices else None,
         }
 
 
@@ -485,6 +556,10 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--mounted-tool", choices=["magnet", "pen"])
     ap.add_argument("--marker", type=float)
+    ap.add_argument("--robot", help="IQ2 robot config (JSON)")
+    ap.add_argument("--realistic", type=int, default=1)
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--pose", help="IQ2 robot pose x,y,yaw")
     args = ap.parse_args(argv)
 
     proto_out = sys.stdout
@@ -496,7 +571,10 @@ def main(argv: list[str] | None = None) -> None:
         with open(args.code_file, encoding="utf-8") as f:
             code = f.read()
     worker = Worker(args.platform, args.scenario, code, args.speed, emit=writer.send,
-                    interactive=True, mounted_tool=args.mounted_tool, marker_protrusion=args.marker)
+                    interactive=True, mounted_tool=args.mounted_tool, marker_protrusion=args.marker,
+                    robot_config=json.loads(args.robot) if args.robot else None,
+                    realistic=bool(args.realistic), seed=args.seed,
+                    pose=[float(v) for v in args.pose.split(",")] if args.pose else None)
 
     class _ConsoleStream:  # stray writes to stdout (e.g. from libraries) go to the console
         def write(self, s):
