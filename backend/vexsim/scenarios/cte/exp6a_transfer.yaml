@@ -1,0 +1,8 @@
+# Lab manual Experiment 6, Part A: one cube at the source (150, -50) = cell 25.
+name: Exp 6A - Transfer
+description: CTE Tile with one cube at the source cell (150, -50). Experiment 6 Part A moves it to (50, 150).
+order: 4
+arm: {}
+signal_tower: {location: 6}
+objects:
+  - {kind: cube, size: 25, location: 25}

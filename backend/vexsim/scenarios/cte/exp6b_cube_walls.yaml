@@ -1,0 +1,17 @@
+# Lab manual Experiment 6, Part B: a cube at cell 3 and two walls of four cubes
+# (cells 13-16 and 27-30), each with an open gap at its far end (cells 18 and 26).
+name: Exp 6B - Two cube walls
+description: A cube at cell 3, and walls of cubes across cells 13-16 and 27-30. Experiment 6 Part B carries the cube to cell 36 through the gaps.
+order: 5
+arm: {}
+signal_tower: {location: 6}
+objects:
+  - {kind: cube, size: 25, location: 3}
+  - {kind: cube, size: 25, location: 13}
+  - {kind: cube, size: 25, location: 14}
+  - {kind: cube, size: 25, location: 15}
+  - {kind: cube, size: 25, location: 16}
+  - {kind: cube, size: 25, location: 27}
+  - {kind: cube, size: 25, location: 28}
+  - {kind: cube, size: 25, location: 29}
+  - {kind: cube, size: 25, location: 30}

@@ -9,7 +9,8 @@ from vexsim.server.app import app
 def test_scenarios_endpoint():
     c = TestClient(app)
     ids = [s["id"] for s in c.get("/vex_cte/api/platforms/cte/scenarios").json()]
-    assert ids == ["cte_tile", "whiteboard"]
+    # the two base maps first, then the lab-manual experiment maps
+    assert ids == ["cte_tile", "whiteboard", "exp4_palletizing", "exp6a_transfer", "exp6b_cube_walls"]
     exs = c.get("/vex_cte/api/platforms/cte/examples").json()
     assert {e["map"] for e in exs} <= set(ids)
     assert "from cte import" in c.get(f"/vex_cte/api/platforms/cte/examples/{exs[0]['id']}").json()["code"]

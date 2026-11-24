@@ -1,0 +1,8 @@
+# Lab manual Experiment 4: one cube in block 17 to move to block 29.
+name: Exp 4 - Palletizing
+description: CTE Tile with one cube in block 17. Experiment 4 picks it up and places it in block 29.
+order: 3
+arm: {}
+signal_tower: {location: 6}
+objects:
+  - {kind: cube, size: 25, location: 17}

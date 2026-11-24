@@ -258,7 +258,7 @@ function selectMap(id: string): void {
     resetSim();
   }
 }
-interface Example { id: string; title: string; map: string; tool?: string }
+interface Example { id: string; title: string; map: string; tool?: string; group?: string }
 let examples: Example[] = [];
 async function exampleCode(id: string): Promise<{ code: string; map: string; title: string; tool?: string }> {
   const res = await fetch(`api/platforms/${PLATFORM}/examples/${id}`);
@@ -344,7 +344,8 @@ const menus = new MenuBar($("menubar"));
 menus.add("File", () => [
   { label: "New Project", action: newProject },
   { label: "Open…", shortcut: "Ctrl+O", action: () => fileOpen.click() },
-  { label: "Load Example", items: examples.map((e) => ({ label: e.title, action: () => void loadExample(e.id) })) },
+  { label: "Load Example", items: examples.filter((e) => !e.group).map((e) => ({ label: e.title, action: () => void loadExample(e.id) })) },
+  { label: "Lab Programs", items: examples.filter((e) => e.group === "Lab Programs").map((e) => ({ label: e.title, action: () => void loadExample(e.id) })) },
   { separator: true },
   { label: "Save to your computer", shortcut: "Ctrl+S", action: downloadProject },
 ]);
@@ -501,7 +502,7 @@ async function init(): Promise<void> {
   if (map && scenarios.some((s) => s.id === map)) scenarioSel.value = map;
   projectName.value = store.get(K.name) || "ArmProject";
   const code = store.get(K.code);
-  editor.code = code ?? (await exampleCode(examples.find((e) => e.map === scenarioSel.value)?.id ?? examples[0].id)).code;
+  editor.code = code ?? (await exampleCode(examples.find((e) => e.map === scenarioSel.value && !e.group)?.id ?? examples[0].id)).code;
   saveState.textContent = "Saved";
   const panel = store.get(K.panel);
   if (panel === "") closePanel(); else openPanel(panel && TITLES[panel] ? panel : "pendant");
