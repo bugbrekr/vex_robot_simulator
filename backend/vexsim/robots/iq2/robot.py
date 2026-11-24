@@ -32,7 +32,9 @@ def load_geometry() -> dict:
 
 def default_config() -> dict:
     g = load_geometry()
-    return {d: {"port": int(g["default_ports"][d]), "enabled": True} for d in DEVICES}
+    cfg = {d: {"port": int(g["default_ports"][d]), "enabled": True} for d in DEVICES}
+    cfg["bumper"]["mount"] = "front"  # or "rear": the bumper can sit on the back face instead
+    return cfg
 
 
 DRIVES = ("fwd", "rwd")
@@ -54,6 +56,8 @@ def normalize_config(cfg: dict | None) -> dict:
                 out[d]["port"] = max(1, min(12, int(v["port"])))
             if "enabled" in v:
                 out[d]["enabled"] = bool(v["enabled"])
+    mount = ((cfg or {}).get("bumper") or {}).get("mount", "front")
+    out["bumper"]["mount"] = mount if mount in ("front", "rear") else "front"
     return out
 
 
@@ -277,15 +281,24 @@ class IQRobotModel(Entity):
         """A point given in the chassis frame (geometry.yaml, FWD layout) -> world."""
         return self.to_world(px + self.offset, py, x, y, theta)
 
+    @property
+    def bumper_rear(self) -> bool:
+        return self.config["bumper"]["enabled"] and self.config["bumper"].get("mount") == "rear"
+
     def footprint(self, x=None, y=None, theta=None, grow: float = 0.0) -> list[tuple[float, float]]:
         f = self.g["footprint"]
-        hw, fr, re = f["half_width"] + grow, f["front"] + grow, f["rear"] - grow
+        rear = f["rear"] - (f["rear_bumper"] if self.bumper_rear else 0.0)
+        hw, fr, re = f["half_width"] + grow, f["front"] + grow, rear - grow
         return [self.chassis_to_world(px, py, x, y, theta) for px, py in ((fr, hw), (re, hw), (re, -hw), (fr, -hw))]
 
     def bumper_zone(self) -> list[tuple[float, float]]:
         f = self.g["footprint"]
         hy = self.g["mounts"]["bumper"]["size"][1] / 2 + 4
-        x0, x1 = f["front"] - 4, f["front"] + 2.5
+        if self.bumper_rear:  # contact plate on the back face, facing backwards
+            face = f["rear"] - f["rear_bumper"]
+            x0, x1 = face - 2.5, face + 4
+        else:
+            x0, x1 = f["front"] - 4, f["front"] + 2.5
         return [self.chassis_to_world(px, py) for px, py in ((x1, hy), (x0, hy), (x0, -hy), (x1, -hy))]
 
     # ------------------------------------------------------------------ stepping

@@ -246,3 +246,18 @@ def test_switching_drive_layout_keeps_the_chassis_in_place():
     assert r.drive == "rwd"
     for (ax, ay), (bx, by) in zip(before, r.footprint(), strict=True):
         assert ax == pytest.approx(bx, abs=1e-6) and ay == pytest.approx(by, abs=1e-6)
+
+
+def test_bumper_can_be_mounted_on_the_back():
+    cfg = default_config()
+    cfg["bumper"]["mount"] = "rear"
+    code = (HEAD + "b = Bumper(Ports.PORT11)\nleft.spin(REVERSE, 50, PERCENT)\nright.spin(REVERSE, 50, PERCENT)\n"
+            "while not b.pressing():\n    wait(10, MSEC)\nprint('rear bump')\n")
+    s = run(code, config=cfg, max_time=30)
+    assert "rear bump" in s["console"]
+    assert s["robot"]["contacts"] == ["wall_s"]  # backed into the south wall
+    assert s["robot"]["config"]["bumper"]["mount"] == "rear"
+    # driving forward into a wall does not press a back-mounted bumper
+    s = run(SMART + "b = Bumper(Ports.PORT11)\ndt.drive(FORWARD)\nwait(12, SECONDS)\nprint(b.pressing())\n",
+            config=cfg, max_time=20)
+    assert s["robot"]["contacts"] == ["wall_n"] and s["console"].strip() == "0"

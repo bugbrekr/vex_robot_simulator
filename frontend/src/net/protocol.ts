@@ -58,7 +58,7 @@ export interface FrameMsg {
 // ---------------------------------------------------------------- IQ (2nd gen)
 export type IQ2Device = "left_motor" | "right_motor" | "distance" | "optical" | "bumper" | "touchled";
 export type IQ2Drive = "fwd" | "rwd";
-export type IQ2Config = Record<IQ2Device, { port: number; enabled: boolean }> & { drive?: IQ2Drive };
+export type IQ2Config = Record<IQ2Device, { port: number; enabled: boolean; mount?: "front" | "rear" }> & { drive?: IQ2Drive };
 
 export interface IQ2MotorSnapshot { pos: number; vel: number; cur: number; mode: string }
 export interface IQ2RobotSnapshot {
@@ -101,7 +101,7 @@ export interface IQ2Geometry {
   pitch: number;
   drive: { wheel_travel: number; track_width: number; wheel_base: number; wheel_width: number; omni_width: number; omni_rollers: number };
   motor: { size: Vec3 };
-  footprint: { front: number; rear: number; half_width: number };
+  footprint: { front: number; rear: number; half_width: number; rear_bumper?: number };
   brain: { center: Vec3; size: Vec3; screen_size: [number, number] };
   battery: { center: Vec3; size: Vec3 };
   rails: Box6[]; crossbars: Box6[]; corner_connectors: [number, number][];

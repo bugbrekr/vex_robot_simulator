@@ -45,7 +45,7 @@ export const DEVICE_MOUNT: Record<IQ2Device, string> = {
   right_motor: "drives the right tyre wheel (mounted mirrored: reverse it in code)",
   distance: "front, facing forward",
   optical: "front underside, facing the floor",
-  bumper: "front face",
+  bumper: "front face or back face",
   touchled: "top rear, behind the brain",
 };
 
@@ -56,7 +56,7 @@ export function defaultConfig(): IQ2Config {
     right_motor: { port: 1, enabled: true },
     distance: { port: 5, enabled: true },
     optical: { port: 3, enabled: true },
-    bumper: { port: 11, enabled: true },
+    bumper: { port: 11, enabled: true, mount: "front" },
     touchled: { port: 4, enabled: true },
   };
 }

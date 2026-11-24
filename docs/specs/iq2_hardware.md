@@ -31,7 +31,7 @@ The robot is BaseBot-style, as in [IMG], but with front-wheel drive:
 | Right drive motor | front right, mounted mirrored, so code must reverse it | 1 (LAB) |
 | Distance (2nd gen) | front, facing forward, sensing point 62 mm high | 5 (LAB) |
 | Optical | front underside, facing the floor, 10 mm above it | 3 (LAB; Exp 8 uses 7) |
-| Bumper (2nd gen) | front face | 11 (LAB) |
+| Bumper (2nd gen) | front face, or the back face (Build tab, `bumper.mount: front \| rear`) | 11 (LAB) |
 | Touch LED | top rear, behind the brain | 4 (LAB) |
 | Inertial | built into the brain | – |
 
@@ -52,7 +52,7 @@ The robot frame has its origin at the drive-axle centre on the floor. +x points 
 | Wheel travel | 200 mm per revolution (Ø 63.7 mm), same for tyres and omnis | REAL [KB-W] |
 | Track width | 173 mm | LAB |
 | Wheelbase (drive axle to omni axle) | 127 mm (10 pitch). The lab config says 76, but the API doesn't use it | ESTIMATE |
-| Collision footprint | x from −165 to +85 mm, y ±97 mm | ESTIMATE |
+| Collision footprint | x from −165 to +85 mm, y ±97 mm. A back-mounted bumper extends the rear by 22 mm | ESTIMATE |
 | Brain body | 86 × 111 × 33 mm, long edge across the robot | ESTIMATE |
 | Battery | 7.2 V, 2000 mAh, Li-ion, under the brain | REAL [KB-G] / position ESTIMATE |
 

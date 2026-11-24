@@ -88,7 +88,11 @@ export class BuildTab {
       const bad = c.enabled && conflicts.has(c.port);
       return `<tr data-dev="${d}" class="${c.enabled ? "" : "off"}">
         <td><label class="switch" title="${c.enabled ? "Plugged in" : "Unplugged / not mounted"}"><input type="checkbox" ${c.enabled ? "checked" : ""}><span></span></label></td>
-        <td><div class="dev-name">${DEVICE_LABEL[d]}</div><div class="dev-mount">${DEVICE_MOUNT[d]}</div></td>
+        <td><div class="dev-name">${DEVICE_LABEL[d]}</div><div class="dev-mount">${d === "bumper"
+          ? `<select class="mount-sel" ${c.enabled ? "" : "disabled"} title="Where the bumper is mounted">
+              <option value="front" ${c.mount !== "rear" ? "selected" : ""}>front face</option>
+              <option value="rear" ${c.mount === "rear" ? "selected" : ""}>back face</option></select>`
+          : DEVICE_MOUNT[d]}</div></td>
         <td><select ${c.enabled ? "" : "disabled"} class="${bad ? "conflict" : ""}">${opts}</select>${bad ? '<div class="conflict-msg">port used twice</div>' : ""}</td>
       </tr>`;
     }).join("");
@@ -100,7 +104,12 @@ export class BuildTab {
         c[d].enabled = (e.target as HTMLInputElement).checked;
         this.app.setConfig(c, true);
       };
-      tr.querySelector<HTMLSelectElement>("select")!.onchange = (e) => {
+      tr.querySelector<HTMLSelectElement>(".mount-sel")?.addEventListener("change", (e) => {
+        const c = next();
+        c.bumper.mount = (e.target as HTMLSelectElement).value as "front" | "rear";
+        this.app.setConfig(c, true);
+      });
+      tr.querySelector<HTMLSelectElement>("select:not(.mount-sel)")!.onchange = (e) => {
         const c = next();
         c[d].port = Number((e.target as HTMLSelectElement).value);
         this.app.setConfig(c, true);

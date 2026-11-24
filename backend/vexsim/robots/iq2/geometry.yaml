@@ -25,7 +25,8 @@ motor:
   size: [50.0, 25.0, 50.0]       # ESTIMATE  x, y, z body (visual)
 
 # Collision footprint (robot frame): front = bumper face, rear = rear crossbar
-footprint: {front: 85.0, rear: -165.0, half_width: 97.0}   # ESTIMATE
+footprint: {front: 85.0, rear: -165.0, half_width: 97.0, rear_bumper: 22.0}   # ESTIMATE
+                                 # rear_bumper: how far a back-mounted bumper sticks out past the rear
 
 # Visual parts (robot frame). Boxes are [cx, cy, cz, sx, sy, sz].
 brain:

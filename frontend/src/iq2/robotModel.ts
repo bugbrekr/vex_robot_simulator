@@ -23,6 +23,7 @@ export class RobotModel {
   private driveParts: THREE.Object3D[] = [];
   private freeParts: THREE.Object3D[] = [];
   private drive: "fwd" | "rwd" = "fwd";
+  private bumperMount: "front" | "rear" = "front";
   private ledMat: THREE.MeshPhysicalMaterial;
   private plunger!: THREE.Mesh;
   private plungerX = 0;
@@ -178,6 +179,8 @@ export class RobotModel {
     this.plunger = rbox([6, usy - 4, usz - 4], std(COL.plunger, 0.45), [m.bumper.pos[0] - 3, m.bumper.pos[1], m.bumper.pos[2]], 2, seg);
     this.plungerX = this.plunger.position.x;
     bump.add(this.plunger);
+    // short bracket back to the crossbar (visible when the bumper is mounted on the back)
+    bump.add(rbox([8, 14, 8], conn, [m.bumper.pos[0] - usx - 3, m.bumper.pos[1], m.bumper.pos[2]], 1, seg));
     this.pick.bumper.push(...bump.children);
     this.devices.bumper = bump;
 
@@ -211,8 +214,25 @@ export class RobotModel {
     this.body.position.x = drive === "rwd" ? wb : 0;
   }
 
+  /** Bumper on the front face (as built) or turned round onto the back face. */
+  setBumperMount(mount: "front" | "rear"): void {
+    const b = this.devices.bumper;
+    this.bumperMount = mount;
+    if (mount === "rear") {
+      const f = this.g.footprint;
+      const face = f.rear - (f.rear_bumper ?? 22);
+      b.rotation.z = Math.PI; // mirror x: the front face (x = front) lands on -front ...
+      b.position.x = face + f.front; // ... then shift it onto the back face
+    } else {
+      b.rotation.z = 0;
+      b.position.x = 0;
+    }
+  }
+
   setConfig(cfg: IQ2Config): void {
     if ((cfg.drive ?? "fwd") !== this.drive) this.setDrive(cfg.drive ?? "fwd");
+    const mount = cfg.bumper.mount ?? "front";
+    if (mount !== this.bumperMount) this.setBumperMount(mount);
     for (const d of ["distance", "optical", "bumper", "touchled"] as const) this.devices[d].visible = cfg[d].enabled;
     for (const d of ["left_motor", "right_motor"] as const) {
       this.devices[d].traverse((o) => {
@@ -260,7 +280,8 @@ export class RobotModel {
       const anchor = new THREE.Box3().setFromObject(this.devices[d]).getCenter(new THREE.Vector3());
       this.root.worldToLocal(anchor);
       const sprite = labelSprite(`${cfg[d].port}`);
-      const [ox, oy, z] = LABEL_AT[d];
+      const [lx, oy, z] = LABEL_AT[d];
+      const ox = d === "bumper" && this.bumperMount === "rear" ? -lx : lx;
       sprite.position.set(anchor.x + ox, anchor.y + oy, z);
       this.labels.add(sprite);
       const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, sprite.position.clone().setZ(sprite.position.z - 8)]),

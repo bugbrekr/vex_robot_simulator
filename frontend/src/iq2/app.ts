@@ -153,7 +153,9 @@ export class App {
 
   applyPreset(ex: ExampleInfo): void {
     // a lab preset sets devices and ports; the drive layout is part of the build and stays
-    this.setConfig({ ...presetConfig(ex.robot), drive: this.config.drive }, true);
+    const cfg = { ...presetConfig(ex.robot), drive: this.config.drive };
+    cfg.bumper.mount = this.config.bumper.mount ?? "front";
+    this.setConfig(cfg, true);
   }
 
   setMap(id: string): void {
